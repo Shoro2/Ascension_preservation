@@ -614,10 +614,10 @@ DataDir = "{data}"
 
     def test_a_windows_command_line_keeps_its_backslashes(self):
         """posix=True splitting would eat every one of them as an escape."""
-        line = ('"C:\\AzerothRealm\\server-ascension\\worldserver.exe" '
-                '-c "C:\\AzerothRealm\\realms\\ascension\\worldserver-bridge.conf"')
+        line = ('"C:\\Games\\wow-server\\bin\\worldserver.exe" '
+                '-c "C:\\Games\\wow-server\\realms\\one\\worldserver.conf"')
         self.assertEqual(bms_config.config_from_command_line(line),
-                         "C:\\AzerothRealm\\realms\\ascension\\worldserver-bridge.conf")
+                         "C:\\Games\\wow-server\\realms\\one\\worldserver.conf")
 
     def test_the_config_flag_is_read_in_each_spelling(self):
         for flag in ("-c", "--config", "-config"):
