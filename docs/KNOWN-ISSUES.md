@@ -113,13 +113,18 @@ Both numbers are real. The bridge worldserver is deliberately pointed at the
 **earned in-game here** cannot exceed 4,824 and the `CMSG_CHAR_CREATE` path is
 genuinely safe. Checking `DataDir` and stopping there reports "not exposed".
 
-That is the trap. **The column has to hold every ID that will ever be written
-to it, not just the ones this server generates.** Imported or restored
-characters carry the IDs of the service they were captured from — the 322,523
-set — and the high ones are ordinary named rows (70001 `Unlocked Tier 6 Chest
-Vendor`, 70002 `Unlocked Tier 6 Leg Vendor`, …), not padding. So measure the
-DBC set that produced **the data you intend to store**, which for any import is
-the source's set and not your `DataDir`.
+That is the trap, and the principle underneath it is worth stating exactly:
+
+> **A DBC bounds the IDs the core writes. It says nothing about IDs arriving
+> from outside.**
+
+The column has to hold every ID that will ever be written to it, not just the
+ones this server generates. Imported or restored characters carry the IDs of
+the service they were captured from — the 322,523 set — and the high ones are
+ordinary named rows (70001 `Unlocked Tier 6 Chest Vendor`, 70002 `Unlocked
+Tier 6 Leg Vendor`, …), not padding. So measure the DBC set that produced
+**the data you intend to store**, which for any import is the source's set and
+not your `DataDir`.
 
 ### Verdict for this archive
 
