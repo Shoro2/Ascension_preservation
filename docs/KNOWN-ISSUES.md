@@ -344,6 +344,21 @@ for `AreaTable` and `InternalName` for `TalentTab` and reported 16 blanked rows
 in a file that has 1. Identify the column from the format, then sanity-check
 that the first few rows read as names.
 
+What caught it was `TalentTab` coming back as `MageFire` where the row is
+called `Fire` — the *name* was wrong, so the column had to be. The count was
+not: 16 blanked rows instead of 1 looks entirely reasonable on a file with
+2,849 rows, and nothing about it invites a second look.
+
+> Report a named row, not a count. A wrong count is indistinguishable from a
+> right one; a wrong name is not.
+
+That is the property every failure on this page shares. A pump that dies
+silently, a config with matching DSNs and the wrong `DataDir`, a correct
+measurement under a wrong verdict, a reader bug wearing a data-quirk
+explanation, a heuristic that picks the wrong column and decodes it
+beautifully — none of them look like errors. They look like answers. Prefer
+whichever form of evidence can visibly contradict you.
+
 **Not affected:** anything reading numeric fields *at a known offset*. The ID
 check in issue 3 above reads field 0 as a `uint32` and never touches the string
 block, so its results stand regardless.
