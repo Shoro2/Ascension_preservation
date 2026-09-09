@@ -193,34 +193,75 @@ SELECT @@SESSION.sql_mode;
 ## 5. Ascension's DBC string blocks have no leading NUL
 
 **Symptom.** A DBC reader that works perfectly on stock 3.3.5a returns an empty
-string for one row per file, and a string missing its first character for
-others. Nothing errors. In an audit tool this shows up as spurious "renamed" or
-"renumbered" verdicts.
+string for one row per file. Nothing errors.
 
 **Cause.** A WDBC string block conventionally opens with a NUL, so offset 0 is
 the empty string and the first real string starts at offset 1. Ascension's
-files do not. The NUL is **relocated, not removed** — the block is the same
-length and every later offset is unchanged:
+files do not — they put a real string at offset 0 and follow it with a doubled
+NUL:
 
 ```
-stock      AreaTable.dbc   \x00Dun Morogh\x00Long...
-ascension  AreaTable.dbc   Dun Morogh\x00\x00Long...
+stock      AreaTable.dbc   \x00Dun Morogh\x00Longshore...
+ascension  AreaTable.dbc   Dun Morogh\x00\x00Longshore...
                            ^ first real string at offset 0
 ```
 
-`"Long"` sits at offset 12 in **both** files. Only the first string moves.
-
-So a reader with the usual `if offset == 0: return ""` guard silently drops the
-first string in every Ascension DBC, and a row still pointing at offset 1
-decodes one character short — `Dun Morogh` reads back as `un Morogh`.
-
-Confirmed across the set; `Achievement.dbc` opens `Son of a...`, `Spell.dbc`
-opens `UPDATE YOUR CLIE…`, both at offset 0 where stock has its NUL.
+Verified from the bytes on all seven files checked — `AreaTable`, `Achievement`,
+`Spell`, `BattlemasterList`, `ChrClasses`, `SkillLine`, `ItemDisplayInfo`.
 
 **Fix.** Do not special-case offset 0. Read from the offset to the next NUL and
 let offset 0 return a real string. Treat "empty" as a genuine value only when
 the byte at that offset actually is NUL.
 
-**Not affected:** anything reading numeric fields. The ID check in issue 3 above
-reads field 0 as a `uint32` and never touches the string block, so its results
-stand regardless.
+### Two things this does *not* imply
+
+Both were published here on 2026-09-09 and both are wrong. They are kept
+because each is an easy inference from the layout above, and because the second
+one will send you chasing the wrong bug.
+
+**It does not mean later offsets are unchanged.** The relocation preserves the
+block *length* only when the first string is the same length in both builds,
+and Ascension rewrote most of these files:
+
+| file | stock 1st string | Ascension 1st string | 2nd string offset |
+|---|---|---|---|
+| `AreaTable` | `Dun Morogh` | `Dun Morogh` | 12 / 12 — aligned |
+| `BattlemasterList` | `Alterac Valley` | `Alterac Valley` | 16 / 16 — aligned |
+| `Achievement` | `Level 10` | `Son of a...` | 10 / **13** |
+| `Spell` | `Word of Recall (OLD)` | `UPDATE YOUR CLIENT!` | 22 / **21** |
+| `ChrClasses` | `PET` | `Warrior` | 5 / **9** |
+| `SkillLine` | `Frost` | `Pet - Pit Lord` | 7 / **16** |
+| `ItemDisplayInfo` | `INV_Robe_02` | `Polearm_2H_Bladed_D_03` | 13 / **28** |
+
+Alignment is a property of identical content, not of the writer. The original
+claim here was drawn from `AreaTable` and `BattlemasterList` — which are
+precisely the two files where Ascension kept stock's first string. **Sampling
+two files that happen to open with the same string will fake the general rule.**
+Never diff string blocks positionally across builds; resolve every offset.
+
+**It does not produce strings missing their first character.** The natural
+guess is that a row still pointing at offset 1 now reads one character short —
+`Dun Morogh` as `un Morogh`. Ascension's rows do not do this. Dumped raw, they
+store **0** and are self-consistent: `AreaTable` id 1 → offset 0 → `Dun
+Morogh`; `ChrClasses` id 1 → offset 0 → `Warrior`.
+
+One-character-short strings come from reading a **numeric column as a string
+offset**. A field holding the small constant 1 decodes as the first string
+minus its first byte, which looks exactly like a subtly corrupted name. In
+`AreaTable` the `un Morogh` that prompted the original claim came from field 0
+— the record ID.
+
+> The tell is that the value is identical on every row. A name column never is.
+
+Count distinct values down the column before believing a string field: in
+Ascension's `ChrClasses` the real name column has 32 distinct values across 32
+rows, while the fields that decode one character short have 2 and 5.
+
+**So the NUL artifact is not what fakes "RENUMBERED" verdicts.** It can only
+blank the single row that points at offset 0 — one row per file. A whole audit
+column coming back wrong is a misidentified field, and the field layout is
+where to look.
+
+**Not affected:** anything reading numeric fields *at a known offset*. The ID
+check in issue 3 above reads field 0 as a `uint32` and never touches the string
+block, so its results stand regardless.
