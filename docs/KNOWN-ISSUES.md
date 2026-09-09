@@ -78,6 +78,24 @@ AzerothCore binds those as `uint32`, but the stock character-table columns are
 The tell that distinguishes it from issue 1: here the character is **not**
 created, so it is absent at character-select. In issue 1 the character exists.
 
+**Check the DBC before you touch the database** — it is the cheaper test, and it
+answers whether you are exposed at all. Field 0 of a WDBC record is the ID:
+
+```python
+import struct
+with open("Data/dbc/Achievement_Criteria.dbc", "rb") as f:
+    magic, n, fields, recsize, sbs = struct.unpack("<4sIIII", f.read(20))
+    data = f.read(n * recsize)
+ids = [struct.unpack_from("<I", data, i * recsize)[0] for i in range(n)]
+print(max(ids), sum(1 for i in ids if i > 65535))
+```
+
+The DBC set in this archive reports `13470 0` — max id 13,470 across 7,655
+criteria, nothing above the ceiling — so the columns are safe here as they
+stand, and the widening below is **not** needed for this archive. It becomes
+necessary only if you merge in a CoA achievement set that pushes ids past
+65535.
+
 ```sql
 -- widen if your Achievement_Criteria.dbc carries ids > 65535
 ALTER TABLE <characters_db>.character_achievement_progress
