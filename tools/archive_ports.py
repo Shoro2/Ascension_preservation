@@ -65,11 +65,62 @@ AUTH_PORT = 3799        # shim3799.py.  The client's realmlist.wtf must name it
 BRIDGE_PORT = 8088
 PY_WORLD_PORT = 8087
 
-WORLD_PORT = int(os.environ.get("ASC_WORLD_PORT", PY_WORLD_PORT))
-if WORLD_PORT not in (8085, 8087, 8088):
-    raise SystemExit(
-        "ASC_WORLD_PORT=%d is not on the client's endpoint allow-list; only "
-        "8085, 8087 and 8088 are. See the note above -- anything else crashes "
-        "the client with ERROR #132 seconds after the world draws." % WORLD_PORT)
+ALLOWED = (8085, 8087, 8088)
 
+
+def _check(port):
+    if port not in ALLOWED:
+        raise SystemExit(
+            "ASC_WORLD_PORT=%d is not on the client's endpoint allow-list; only "
+            "8085, 8087 and 8088 are. See the note above -- anything else crashes "
+            "the client with ERROR #132 seconds after the world draws." % port)
+    return port
+
+
+def _listening(port):
+    """Is something accepting on HOST:port right now?"""
+    import socket
+    s = socket.socket()
+    s.settimeout(0.25)
+    try:
+        return s.connect_ex((HOST, port)) == 0
+    except OSError:
+        return False
+    finally:
+        s.close()
+
+
+def world_port():
+    """The world port to ADVERTISE, resolved as late as possible.
+
+    The hub starts helpers in profile order -- shim3799.py first, then whichever
+    world -- and spawns them through Win32_Process.Create, which takes no
+    environment block. So at shim *import* time there is nothing to read and no
+    way for the launcher to have told us anything. Resolving at import is what
+    made the bridge profile advertise 8087 and hang the client at the realm list.
+
+    Order: an explicit ASC_WORLD_PORT always wins (manual runs, and the override
+    the docstring above describes). Otherwise pick whichever world is actually
+    accepting connections, bridge first -- it is the one with a real world behind
+    it. If neither is up yet, fall back to the historical default rather than
+    failing, so a shim started before its world still serves a realm list.
+    """
+    env = os.environ.get("ASC_WORLD_PORT")
+    if env:
+        return _check(int(env))
+    for port in (BRIDGE_PORT, PY_WORLD_PORT):
+        if _listening(port):
+            return port
+    return PY_WORLD_PORT
+
+
+def world_addr():
+    """"host:port" for the realm list. Call this, do not cache it at import."""
+    return "%s:%d" % (HOST, world_port())
+
+
+# Kept so anything still importing the constant keeps working. It is resolved at
+# IMPORT time and is therefore the value this module used to get wrong -- prefer
+# world_addr() anywhere the answer is allowed to arrive late.
+WORLD_PORT = world_port()
 REALM_ADDR = "%s:%d" % (HOST, WORLD_PORT)

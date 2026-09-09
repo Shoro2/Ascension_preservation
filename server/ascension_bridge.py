@@ -62,6 +62,7 @@ import struct
 import sys
 import threading
 import time
+import traceback
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, BASE)
@@ -82,7 +83,11 @@ for _stream in (sys.stdout, sys.stderr):
 # and every Ascension-custom packet builder; importing keeps the two from drifting.
 # It has no module-level side effects -- everything lives behind __main__.
 from world_server import (RC4, SERVER_ENC_SEED, SERVER_DEC_SEED, smsg_realm_info,
-                          REALM_FLAVOUR_WCR, SMSG_TUTORIAL_FLAGS)
+                          REALM_FLAVOUR_WCR, REALM_FLAVOUR_COA, REALM_FLAVOUR_DEV,
+                          SMSG_TUTORIAL_FLAGS, smsg_ca_active_spec,
+                          build_values_update, u32le,
+                          UNIT_FIELD_BYTES_0, PLAYER_END)
+import chardata
 
 # ---- configuration ----------------------------------------------------------
 LISTEN_HOST = "127.0.0.1"
@@ -111,16 +116,152 @@ CHALLENGE_TAIL = bytes(32)
 # So the bridge advertises WCR, and deliberately does NOT send SMSG_UPDATE_CONFIGS:
 # CanCreateArchetype() (CharacterCreate.lua:12) is realm-name AND config, and with
 # the config absent the archetype steps stay out of the flow.
-BRIDGE_REALM_FLAVOUR = REALM_FLAVOUR_WCR
+# COA REALM MODE (ASC_COA=1).  Flips the flavour to COA so the client offers the
+# 21 Conquest of Azeroth classes, and turns on the three things that makes them
+# work on a core that cannot build them:
+#   * CMSG_CHAR_CREATE remembers the CoA class, then substitutes a carrier class
+#     the core CAN build (fix_char_create already did the substitution half).
+#   * SMSG_CHAR_ENUM projects the CoA class back, so the character presents as
+#     itself rather than as its carrier.
+#   * a values update puts the CoA class in UNIT_FIELD_BYTES_0, which is the
+#     dword the CA ENGINE reads -- the char-enum rewrite above does not reach it.
+#     Without this the panel is labelled Tinker while the engine is still the
+#     carrier Warrior: measured AE 80 / TE 71 (the stock-class essence row shared
+#     by keys 1..9 and 11) instead of Tinker's 36 / 35, CanLearnID false on every
+#     node, and the spec chooser's button dead because SwitchActiveChrSpec has
+#     nothing valid to switch to.
+#   * the CA bootstrap gains the essence budget and known-entry packets, served
+#     from the character's OWN class family -- never Free-Pick's.
+# Default OFF: with ASC_COA unset this file behaves exactly as before.
+# Accepted as an argv flag as well as an env var: control/realms.py starts
+# helpers with an `args` string and has no way to set environment variables, so
+# a profile-driven CoA realm needs the flag form.
+COA_MODE = (os.environ.get("ASC_COA", "") not in ("", "0")
+            or "--coa" in sys.argv)
+
+# CoA mode uses DEV, *not* REALM_FLAVOUR_COA.  This is the one place in the file
+# where the correct constant is not the one whose name matches the mode, so:
+#
+# REALM_FLAVOUR_COA sets only +0x46.  Four consecutive sessions served it
+# (b009 11:08:52, b010 11:09:15, b002 11:17:34, b009 11:22:14 on 2026-09-09) and
+# every one of them died the same way -- the client took AUTH_OK, took
+# SMSG_REALM_INFO, opened COP_GET_CHARACTERS, and hung up ~40 ms later without
+# ever putting CMSG_CHAR_ENUM on the wire (client Logs/connection.log).  It is
+# not a crash: no dump was written and Fatal.txt stayed empty, so the client is
+# calling Disconnect on purpose, below Lua -- CharacterSelect.lua contains no CoA
+# gate at all, and the character-select Lua has not run yet at that point.
+# Every session on this bridge that DID reach a character list, across days, was
+# served REALM_FLAVOUR_WCR.  The 8 flavour bytes are the only thing that differs
+# between the two groups on the wire.
+#
+# DEV sets +0x44 instead, and world_server.py -- the implementation that is
+# proven to render the CoA tree and create CoA characters -- has always used it
+# (ARCHIVE_REALM_FLAVOUR = REALM_FLAVOUR_DEV).  It is not a weaker choice: the
+# client derives CanCreateCoA as (+0x46 or +0x44) and CanCreateWCR as
+# (+0x47 or +0x44), so the Dev byte turns on CoA creation AND classic creation,
+# and it is what keeps the advancement-record filter open --
+# dl = IsDevelopment || !(+0x46 || +0x47) is false under REALM_FLAVOUR_COA, which
+# HIDES the late CoA classes the COA flavour is supposed to be offering.  See the
+# flavour comment in world_server.py, and TROUBLESHOOTING.md under
+# "dc's at character select".
+#
+# ASC_REALM_FLAVOUR=coa|dev|wcr|live overrides, so the next person to doubt this
+# can re-run the A/B without editing code.
+_FLAVOURS = {"coa": REALM_FLAVOUR_COA, "dev": REALM_FLAVOUR_DEV,
+             "wcr": REALM_FLAVOUR_WCR}
+BRIDGE_REALM_FLAVOUR = _FLAVOURS.get(
+    os.environ.get("ASC_REALM_FLAVOUR", "").strip().lower(),
+    REALM_FLAVOUR_DEV if COA_MODE else REALM_FLAVOUR_WCR)
+
+COA_STATE = None
+COA_CLASSES = None
+COA_TREE = None
+COA_ESSENCE = None
+COA_CLASS_NAMES = {}
+if COA_MODE:
+    import coa_mode
+    COA_STATE = coa_mode.CoAState()
+    COA_CLASSES = coa_mode.CoAClasses()
+    COA_TREE = coa_mode.CATree()
+    COA_ESSENCE = coa_mode.Essence()
+    COA_CLASS_NAMES = COA_CLASSES.names()
 
 SMSG_AUTH_CHALLENGE = 0x1EC
 CMSG_AUTH_SESSION = 0x1ED
 SMSG_AUTH_RESPONSE = 0x1EE
 CMSG_CHAR_CREATE = 0x036
+SMSG_CHAR_ENUM = 0x03B
 SMSG_REALM_INFO = 0x9BC
 
 SMSG_MESSAGECHAT = 0x096
 SMSG_LOGIN_VERIFY_WORLD = 0x236
+CMSG_SET_ACTIVE_MOVER = 0x26A
+# Value from this file's own CNAMES table (0x03D).  It was referenced by the CoA
+# roster lookup in pump_client_to_core and never defined, which is a NameError on
+# the FIRST client packet of every CoA session -- `opcode == CMSG_PLAYER_LOGIN`
+# resolves the name whatever the opcode is.  It stayed invisible because the CoA
+# realm-flavour bug killed the session one packet earlier, so the client had never
+# sent anything for it to fire on.
+CMSG_PLAYER_LOGIN = 0x03D
+
+# CHARACTER ADVANCEMENT BOOTSTRAP.  SMSG_CA_ACTIVE_SPEC (0x725) is the ONE
+# Ascension custom this bridge has to originate, and it is not optional: opening
+# the CA panel without it crashes the client outright.
+#
+# The opcode is above FIRST_CUSTOM_OPCODE, so AzerothCore neither knows it nor
+# could ever send it -- the bridge is the only thing in the chain that can.  Its
+# handler (0x10171d90) does the one-time bootstrap of the whole client-side CA
+# state: on the first 0x725 of a session it builds the per-GUID container and
+# calls 0x10173d00, which allocates the 0x278-byte pending-build object and
+# stores it at CASingleton+0x24.  The per-entry visibility filter (0x101c6bd0,
+# reached from GetEntriesByClass) then does, for every entry with flags bit 19:
+#       state = [CASingleton+0x24]
+#       hit   = state->find(entry->id)     ; 0x10152920: mov edx,[ecx+0x24]
+# With no 0x725 ever sent, state is NULL and that instruction faults on
+# 0x00000024 -- ERROR #132 ACCESS_VIOLATION, Current Addon function
+# SetFilteredEntries.  See world_server.py:418-437, which documents the same
+# handler from the disassembly, and TROUBLESHOOTING.md for the crash report.
+#
+# TIMING is copied from world_server.py's flush_ca(), not invented here.  The
+# handler keys its container off the LOCAL PLAYER GUID, and during the loading
+# screen the client has no player object to key on -- sent with the login burst
+# it arrives before the thing it fills into exists.  CMSG_SET_ACTIVE_MOVER is
+# the client stating that the player object now exists and the loading screen is
+# done, so that is the trigger, with a timer as the safety net for a session
+# where it never arrives.
+#
+# Armed on EVERY SMSG_LOGIN_VERIFY_WORLD, not once per socket: one TCP session
+# can enter the world repeatedly (logout -> character select -> Enter World),
+# and a second entry can be a different character, whose GUID needs its own
+# container.  Re-sending for a GUID that already has one is a no-op in the
+# handler.
+#
+# DELIBERATELY 0x725 ALONE.  world_server.py follows it with 5600 x 0x722
+# (essence budget) and a 0x726 (known entries), both of which are archive state
+# that AzerothCore does not have and this bridge cannot invent.  Their absence
+# costs visibility of bit-19 entries -- state->find() answers "not known", so
+# those entries render HIDDEN rather than faulting -- which is the documented
+# "spec" mode, and is the whole point: the panel opens and enumerates instead of
+# taking the client down.  Adding packets to this stream is also how the bridge
+# has broken the client before (Ascension widened 0x266/0x267 to 10 bytes), so
+# it stays at the minimum that fixes the fault.
+SMSG_CA_ACTIVE_SPEC = 0x725
+SMSG_CA_ESSENCE_BUDGET = 0x722
+SMSG_CA_KNOWN_ENTRIES = 0x726
+CMSG_CA_KNOWN_ENTRIES_UPLOAD = 0x727
+# Stock 3.3.5a, not a custom.  The bridge already forwards the core's own
+# SMSG_UPDATE_OBJECTs untouched; this is one extra VALUES block on a GUID the
+# client demonstrably already has (it is sent on CMSG_SET_ACTIVE_MOVER, which is
+# the client telling us it has its player object).
+SMSG_UPDATE_OBJECT = 0x0A9
+# Set ASC_COA_CLASS_BYTE=0 to serve the CoA class in the character list but leave
+# UNIT_FIELD_BYTES_0 as the core wrote it -- i.e. to reproduce the pre-fix
+# behaviour without editing code, the way ASC_REALM_FLAVOUR does for the flavour.
+COA_WRITE_CLASS_BYTE = os.environ.get("ASC_COA_CLASS_BYTE", "1") not in ("", "0")
+CA_BOOTSTRAP = os.environ.get("ASC_CA_BOOTSTRAP", "1") not in ("", "0")
+CA_BOOTSTRAP_FALLBACK = float(os.environ.get("ASC_CA_FALLBACK", "10"))
+CA_ACTIVE_INDEX = int(os.environ.get("ASC_CA_ACTIVE_INDEX", "0"))
+CA_SPEC_SLOTS = int(os.environ.get("ASC_CA_SPEC_SLOTS", "1"))
 
 # ARCHIVE IDENTIFICATION.  The client's realmList CVar is restored to the live
 # address by native code before the player is in world (measured 2026-09-02:
@@ -216,7 +357,7 @@ CNAMES = {                                  # client -> core
     0x18E: "CMSG_QUESTGIVER_CHOOSE_REWARD",
     0x19E: "CMSG_LIST_INVENTORY",    0x1B0: "CMSG_TRAINER_LIST",
     0x213: "CMSG_UNLEARN_TALENTS",   0x251: "CMSG_LEARN_TALENT",
-    0x2E7: "CMSG_WARDEN_DATA",
+    0x26A: "CMSG_SET_ACTIVE_MOVER",  0x2E7: "CMSG_WARDEN_DATA",
 }
 SNAMES = {                                  # core -> client
     0x03A: "SMSG_CHAR_CREATE",       0x03B: "SMSG_CHAR_ENUM",
@@ -641,8 +782,7 @@ def stage_session_key(account, key40):
                     # rejected, and `username` is varchar(32).  Without this
                     # check the next line is row[0] on None, and the resulting
                     # "'NoneType' is not subscriptable" says nothing about the
-                    # real cause.  Name it instead.  See docs/KNOWN-ISSUES.md
-                    # section 4 for the general form of this trap.
+                    # real cause.  Name it instead.
                     raise RuntimeError(
                         "account %r did not read back after INSERT -- almost "
                         "certainly truncated to fit account.username "
@@ -675,9 +815,31 @@ class Session(object):
         self.account = b"?"
         self.customs_sent = False
         self.reason = None
+        # Two threads write to the client socket -- the core->client pump and,
+        # off timers, the archive hello and the CA bootstrap -- and the client
+        # headers are plaintext, so a half-written packet is not recoverable by
+        # anything downstream.  One lock around every client write.
+        self.client_lock = threading.Lock()
+        self.ca_lock = threading.Lock()
+        self.ca_armed = False        # world entry seen, 0x725 still owed
+        self.coa_roster = {}         # guid -> name, harvested from SMSG_CHAR_ENUM
+        self.coa_looks = {}          # guid -> (race, gender), same packet
+        self.coa_guid = None         # the GUID this session is playing
+        self.coa_name = None         # the character this session is playing
+        self.ca_timer = None
 
     def log(self, msg):
         log("b%03d: %s" % (self.cid, msg))
+
+    def send_client(self, opcode, body):
+        """Write one plaintext packet to the client. Returns False once the
+        socket is gone, so callers on timer threads can give up quietly."""
+        try:
+            with self.client_lock:
+                self.client.sendall(frame_s2c(opcode, body))
+        except OSError:
+            return False
+        return True
 
     # -- handshake ------------------------------------------------------------
     def run(self):
@@ -687,12 +849,31 @@ class Session(object):
             self.log("!! handshake failed: %r" % (e,))
             self.close()
             return
-        t = threading.Thread(target=self.pump_core_to_client, daemon=True)
+        t = threading.Thread(target=self._guarded,
+                             args=(self.pump_core_to_client, "core"), daemon=True)
         t.start()
         try:
-            self.pump_client_to_core()
+            self._guarded(self.pump_client_to_core, "client")
         finally:
             self.close(self.reason)
+
+    def _guarded(self, pump, which):
+        """Run a pump and never let an exception vanish.
+
+        run() is a thread target, so anything that is not OSError/ValueError
+        escapes to threading's excepthook and out to a stderr nobody is reading.
+        The session then ends via close(None), which logs a bare "session closed"
+        -- indistinguishable from the client hanging up. That is precisely how the
+        CoA character-select disconnect presented on 2026-09-09, and how the
+        char-create hang presented before it: a crash wearing a clean disconnect's
+        clothes. The traceback IS the diagnosis, so it goes in bridge_log.txt
+        where someone will actually find it."""
+        try:
+            pump()
+        except Exception:
+            self.reason = self.reason or (
+                "%s pump crashed -- traceback above" % which)
+            self.log("!! %s pump crashed:\n%s" % (which, traceback.format_exc()))
 
     def handshake(self):
         # 1. challenge the client exactly as world_server.py does
@@ -777,6 +958,17 @@ class Session(object):
                 self.log("   C->S chat %s" % describe_chat(body))
             elif worth_logging(opcode, True) and opcode != CMSG_PING:
                 self.log("   C->S %s (%d B)" % (opname(opcode, True), len(body)))
+            # CMSG_PLAYER_LOGIN carries the GUID and nothing else, so the name
+            # this session is playing is resolved through the roster harvested
+            # from the character list the client was just shown.
+            if COA_MODE and opcode == CMSG_PLAYER_LOGIN and len(body) >= 8:
+                guid = struct.unpack_from("<Q", body, 0)[0]
+                self.coa_guid = guid
+                self.coa_name = self.coa_roster.get(guid)
+                self.log("   CoA: player login guid=0x%X -> %r (class %s)"
+                         % (guid, self.coa_name,
+                            COA_STATE.get_class(self.coa_name)
+                            if self.coa_name else None))
             if opcode >= FIRST_CUSTOM_OPCODE:
                 self.handle_custom(opcode, body)
                 continue
@@ -784,8 +976,27 @@ class Session(object):
                 body = self.fix_char_create(body)
             try:
                 self.core.sendall(frame_c2s(opcode, body, self.c2s))
-            except OSError:
+            except OSError as e:
+                # Never break silently here. A bare `break` leaves self.reason
+                # unset, so run() calls close(None) and the log shows only
+                # "session closed" -- indistinguishable from a clean client
+                # disconnect, which is exactly how this looked from the outside
+                # when the CoA realm dropped every session at character select
+                # on 2026-09-09. Name the opcode we were forwarding: that is the
+                # packet the core refused, and it is the whole diagnosis.
+                self.reason = self.reason or (
+                    "core refused %s (%d B): %r -- the core closed this session's "
+                    "socket, look for its reason in the worldserver log"
+                    % (opname(opcode, True), len(body), e))
+                self.log("!! core send failed on %s: %r"
+                         % (opname(opcode, True), e))
                 break
+            # After forwarding, never instead of it: the core wants this packet
+            # too, and the client is only told about its CA state once the core
+            # has been told the player is moving.
+            if opcode == CMSG_SET_ACTIVE_MOVER and self.ca_armed:
+                self.send_ca_bootstrap("SET_ACTIVE_MOVER -- client has its "
+                                       "player object")
 
     spellmod_seen = None
 
@@ -806,16 +1017,16 @@ class Session(object):
                 break
             opcode, body = pkt
             if opcode in (SMSG_CHAR_CREATE, SMSG_CHARACTER_LOGIN_FAILED) and body:
-                # opname() REQUIRES the direction argument.  Calling it with one
-                # argument raised TypeError right here, the instant the core sent
-                # SMSG_CHAR_CREATE -- and because this log sits OUTSIDE the
-                # read_s2c try/except, it took the whole core->client pump thread
-                # down with it.  The create-success ack (and every S->C packet
-                # after it) then never reached the client, so the "Creating
-                # character" dialog hung forever even though the core had already
-                # written the character row.  Cancelling and reconnecting showed
-                # the character present at character-select, which made this look
-                # like a missing server packet rather than a bridge crash.
+                # opname() REQUIRES the direction arg.  Calling it with one arg
+                # raised TypeError right here the instant SMSG_CHAR_CREATE arrived,
+                # and because this log sits OUTSIDE the read_s2c try/except it took
+                # the whole core->client pump thread down with it -- so the
+                # create-success ack (and every S->C packet after it) never reached
+                # the client, hanging the "Creating character" dialog even though
+                # the core had already written the row and sent the ack.  The fix
+                # is simply to pass the direction so the pump survives and forwards
+                # the real reply (success OR a genuine failure code) at send_client
+                # below.  See CoA reconstruction log 3.2.1 -- same bug, same repo.
                 self.log("   S->C %s -> %s"
                          % (opname(opcode, False),
                             RESPONSE_CODES.get(body[0], "0x%02X" % body[0])))
@@ -890,9 +1101,29 @@ class Session(object):
                 self.log("   .. DROPPED %s (%d B) [ASC_DROP_OPCODES]"
                          % (opname(opcode, False), len(body)))
                 continue
-            try:
-                self.client.sendall(frame_s2c(opcode, body))
-            except OSError:
+            # CoA mode: the core lists every character under the carrier class it
+            # was built with.  Put the real class back before the client sees it,
+            # or the character select screen shows 21 Warriors.
+            if COA_MODE and opcode == SMSG_CHAR_ENUM and body:
+                body, changed, roster, looks = coa_mode.rewrite_char_enum(
+                    body, lambda n: COA_STATE.get_class(n))
+                self.coa_roster.update(roster)
+                self.coa_looks.update(looks)
+                for name, was, now in changed:
+                    self.log("   CoA: char enum %r class %s -> %s (%s)"
+                             % (name, was, now, COA_CLASS_NAMES.get(now, "?")))
+            if not self.send_client(opcode, body):
+                # send_client swallows OSError and returns False, so this was the
+                # ONE exit in the whole session that logged nothing at all and set
+                # no reason -- close(None) then printed a bare "session closed",
+                # which is exactly what a clean client disconnect prints. That is
+                # what made the CoA character-select drop look like a bridge crash
+                # for two restarts on 2026-09-09; it was neither a crash nor our
+                # bug, it was the client hanging up first. Name it.
+                self.reason = self.reason or (
+                    "client socket gone while forwarding %s (%d B) -- the CLIENT "
+                    "hung up first; check its Logs/connection.log and Errors/"
+                    % (opname(opcode, False), len(body)))
                 break
             if opcode == SMSG_TUTORIAL_FLAGS and not self.customs_sent:
                 self.send_customs()
@@ -904,6 +1135,7 @@ class Session(object):
             if opcode == SMSG_LOGIN_VERIFY_WORLD:
                 threading.Timer(ARCHIVE_HELLO_DELAY,
                                 self.send_archive_hello).start()
+                self.arm_ca_bootstrap()
         self.close(self.reason)
 
     def send_archive_hello(self):
@@ -911,12 +1143,162 @@ class Session(object):
         archive.  Delayed past world entry because the chat frame has to exist
         to raise CHAT_MSG_SYSTEM, and that is what GlobalOverwrites.lua listens
         for to set ASC_ARCHIVE_SEEN."""
-        try:
-            self.client.sendall(
-                frame_s2c(SMSG_MESSAGECHAT, smsg_system_chat(ARCHIVE_HELLO)))
-        except OSError:
+        if not self.send_client(SMSG_MESSAGECHAT, smsg_system_chat(ARCHIVE_HELLO)):
             return
         self.log("-> client archive hello (%s)" % ARCHIVE_TOKEN)
+
+    def arm_ca_bootstrap(self):
+        """World entry seen. Owe the client one 0x725, to be paid when it says
+        its player object exists."""
+        if not CA_BOOTSTRAP:
+            return
+        with self.ca_lock:
+            self.ca_armed = True
+            if self.ca_timer is not None:
+                self.ca_timer.cancel()
+            self.ca_timer = threading.Timer(
+                CA_BOOTSTRAP_FALLBACK, self.send_ca_bootstrap,
+                args=("fallback -- no SET_ACTIVE_MOVER after %gs"
+                      % CA_BOOTSTRAP_FALLBACK,))
+            self.ca_timer.daemon = True
+            self.ca_timer.start()
+
+    def send_ca_bootstrap(self, why):
+        """SMSG_CA_ACTIVE_SPEC, once per world entry. Both the SET_ACTIVE_MOVER
+        path and the fallback timer land here, so it disarms under the lock."""
+        with self.ca_lock:
+            if not self.ca_armed:
+                return
+            self.ca_armed = False
+            if self.ca_timer is not None:
+                self.ca_timer.cancel()
+                self.ca_timer = None
+        if not self.send_client(SMSG_CA_ACTIVE_SPEC,
+                                smsg_ca_active_spec(CA_ACTIVE_INDEX,
+                                                    CA_SPEC_SLOTS)):
+            return
+        self.log("-> client SMSG_CA_ACTIVE_SPEC active=%d slots=%d (%s) -- CA "
+                 "state allocated, panel will not fault"
+                 % (CA_ACTIVE_INDEX, CA_SPEC_SLOTS, why))
+        if COA_MODE:
+            self.send_coa_state()
+
+    def send_class_byte(self, clas):
+        """Put the CoA class in UNIT_FIELD_BYTES_0, the dword the CA ENGINE reads.
+
+        Rewriting SMSG_CHAR_ENUM is not enough and this is the evidence, measured
+        on the maintainer's level-80 Tinker (guid 1) on 2026-09-09 BEFORE this existed:
+
+            UnitClassID("player")   28        <- char-enum rewrite, correct
+            UnitClass("player")     "Tinker"  <- same source, correct
+            GetRemainingAE/TE       80 / 71   <- the STOCK-class essence row,
+                                                 shared by keys 1..9 and 11.
+                                                 Tinker's own family is 36 / 35.
+            CanLearnID(<Tinker>)    false
+            CanLearnID(<Mage>)      false     <- a Warrior can learn neither
+
+        Two sources disagreed: the labels came from the rewritten character
+        record, the engine from the descriptor dword the core wrote with the
+        carrier class.  `GetEntriesByClass`'s filter takes its class argument as
+        `[[obj+8]+0x5c] >> 8` (Extensions.dll 0x1017bb1f) -- that dword, nothing
+        else -- so nothing short of correcting it moves the engine.
+
+        Sent BEFORE the essence budget on purpose.  The engine reads the class on
+        demand rather than caching it, so order is not strictly load-bearing, but
+        a budget that lands while the engine still believes it is a Warrior is
+        exactly the state this method exists to end.
+
+        Same mechanism as world_server.py's `.class` command (its values-update
+        call is the model for this one), which is measured to reach the CA
+        subsystem immediately with no relog -- though the class NAME caches at
+        object-create time.  Here the name is already right from the char enum,
+        so both halves should agree without a relog.
+
+        Failure is non-fatal by construction: if race/gender were never harvested
+        this returns without sending, leaving the pre-fix behaviour rather than
+        guessing an appearance and silently changing the character's race."""
+        if not COA_WRITE_CLASS_BYTE:
+            self.log("   CoA: UNIT_FIELD_BYTES_0 left as the core wrote it "
+                     "[ASC_COA_CLASS_BYTE=0] -- the CA engine will use the "
+                     "carrier class %d, not %d" % (AC_FALLBACK_CLASS, clas))
+            return
+        guid = self.coa_guid
+        look = self.coa_looks.get(guid) if guid is not None else None
+        if guid is None or look is None:
+            self.log("   CoA: no race/gender harvested for guid %r -- class byte "
+                     "NOT written (the CA engine keeps the carrier class). "
+                     "UNIT_FIELD_BYTES_0 is one dword and race rides in it, so "
+                     "guessing here would change the character's race."
+                     % (guid,))
+            return
+        race, gender = look
+        # Power is the CARRIER's, deliberately -- see coa_mode.bytes0_for.
+        power = chardata.power_for(AC_FALLBACK_CLASS) & 0xFF
+        bytes0 = coa_mode.bytes0_for(race, clas, gender, power)
+        if not self.send_client(
+                SMSG_UPDATE_OBJECT,
+                build_values_update(guid, {UNIT_FIELD_BYTES_0: u32le(bytes0)},
+                                    PLAYER_END)):
+            return
+        self.log("-> client SMSG_UPDATE_OBJECT UNIT_FIELD_BYTES_0=0x%08X for "
+                 "guid 0x%X (race %d, class %d (%s), gender %d, power %d from "
+                 "carrier class %d) -- the CA engine reads THIS, not the char "
+                 "enum" % (bytes0, guid, race, clas,
+                           COA_CLASS_NAMES.get(clas, "?"), gender, power,
+                           AC_FALLBACK_CLASS))
+
+    def send_coa_state(self):
+        """The two packets the WCR bridge deliberately omits, now that there is a
+        CoA class to serve them for.
+
+        Order matters and is world_server.py's: 0x725 (already sent above) builds
+        the client-side container, THEN the essence budget, THEN the known set.
+        Sent in the other order the budget lands in a container that does not
+        exist yet.
+
+        The essence family is the character's OWN class byte. Serving family 10
+        (Free-Pick, AE 140 / TE 71) to a Tinker would hand it more than three
+        times its real budget -- the precise 'mixing non-CoA assets' failure this
+        realm exists to avoid."""
+        name = self.coa_name
+        clas = COA_STATE.get_class(name) if name else None
+        if clas is None or clas not in COA_CLASS_NAMES:
+            # `clas not in COA_CLASS_NAMES` is the second half of the guard in
+            # fix_char_create, checked again at the point of service because
+            # coa_state.json outlives any one build of this file and may already
+            # hold a class byte an older, laxer version wrote.
+            self.log("   CoA: no CoA class stored for %r (got %r) -- essence and "
+                     "known-entry packets withheld (character predates CoA mode, "
+                     "or was made as a stock or Free-Pick class)" % (name, clas))
+            return
+        self.send_class_byte(clas)
+        rows = COA_ESSENCE.rows_for(clas)
+        if not rows:
+            self.log("   CoA: class %d has no essence family in the DBC -- "
+                     "withheld rather than sending a zero budget" % clas)
+        else:
+            sent = 0
+            for r in rows:
+                if not self.send_client(
+                        SMSG_CA_ESSENCE_BUDGET,
+                        coa_mode.smsg_ca_essence_budget(
+                            r[0], r[1], r[2], r[7], r[8])):
+                    return
+                sent += 1
+            ae, te = COA_ESSENCE.budget(clas, 80)
+            self.log("-> client %d x SMSG_CA_ESSENCE_BUDGET family=%d (%s); "
+                     "at level 80 that family is AE %d / TE %d"
+                     % (sent, clas, COA_CLASS_NAMES.get(clas, "?"), ae, te))
+        known = COA_STATE.get_entries(name)
+        if self.send_client(SMSG_CA_KNOWN_ENTRIES,
+                            coa_mode.smsg_ca_known_entries(known)):
+            info = COA_CLASSES.by_byte.get(clas, {})
+            ct = info.get("classtype")
+            self.log("-> client SMSG_CA_KNOWN_ENTRIES %d entr%s (%s tree = "
+                     "classtype %s, %d entries available)"
+                     % (len(known), "y" if len(known) == 1 else "ies",
+                        COA_CLASS_NAMES.get(clas, "?"), ct,
+                        len(COA_TREE.entries_for(ct)) if ct is not None else 0))
 
     def send_customs(self):
         """Ascension-only packets the core cannot know about, in world_server.py's
@@ -928,8 +1310,8 @@ class Session(object):
         # for the whole session. +0x48 nonzero is the addon-loadability gate:
         # without it every LoadOnDemand Ascension addon reports loadable=nil and
         # the custom UI stays dark.
-        self.client.sendall(frame_s2c(
-            SMSG_REALM_INFO, smsg_realm_info(flags=BRIDGE_REALM_FLAVOUR)))
+        self.send_client(SMSG_REALM_INFO,
+                         smsg_realm_info(flags=BRIDGE_REALM_FLAVOUR))
         self.log("-> client SMSG_REALM_INFO flavour=%r (addon gate open, stock "
                  "class creation)" % (tuple(BRIDGE_REALM_FLAVOUR),))
 
@@ -938,6 +1320,20 @@ class Session(object):
         """Ascension's own opcodes never reach the core. Answer what we can, and
         say plainly what we dropped -- a silent drop here looks exactly like a
         protocol bug three hours later."""
+        # CMSG_CA_KNOWN_ENTRIES (0x727) is the client half of a learn OR an
+        # unlearn: it uploads its whole idea of the known set. In CoA mode the
+        # bridge is the authority, so it stores that set and echoes the
+        # server's own 0x726 back -- which is also what drags the spellbook
+        # along. Without this a learned node is forgotten on relog.
+        if COA_MODE and opcode == CMSG_CA_KNOWN_ENTRIES_UPLOAD and self.coa_name:
+            records = coa_mode.parse_cmsg_ca_known_entries(body)
+            COA_STATE.set_entries(self.coa_name, records)
+            self.log("   CoA: %r uploaded %d known entr%s -- stored"
+                     % (self.coa_name, len(records),
+                        "y" if len(records) == 1 else "ies"))
+            self.send_client(SMSG_CA_KNOWN_ENTRIES,
+                             coa_mode.smsg_ca_known_entries(records))
+            return
         self.log("   custom 0x%03X (%d B) not forwarded" % (opcode, len(body)))
 
     def fix_char_create(self, body):
@@ -954,6 +1350,38 @@ class Session(object):
         clas = tail[1]
         if clas in AC_VALID_CLASSES:
             return body
+        # CoA mode: the substitution is no longer a one-way loss.  Remember which
+        # class the player actually chose, keyed by the character NAME (the only
+        # identifier present in both CMSG_CHAR_CREATE and SMSG_CHAR_ENUM -- the
+        # GUID does not exist yet here), so the enum can project it back.
+        if COA_MODE and COA_STATE is not None:
+            name = body[:z].decode("utf-8", "replace")
+            if not name:
+                pass
+            elif clas in COA_CLASS_NAMES:
+                COA_STATE.set_class(name, clas)
+                self.log("   CoA: %r chose class %d (%s); carrier class %d for "
+                         "the core" % (name, clas,
+                                       COA_CLASS_NAMES.get(clas, "?"),
+                                       AC_FALLBACK_CLASS))
+            else:
+                # Not every class the core cannot build is a CoA class. The Dev
+                # flavour this realm serves also turns CanCreateHero on, and
+                # CharacterCreate.lua:1533 makes HERO_CLASS_ID (10) -- Free-Pick
+                # -- the DEFAULT selection, so a player who never touches the Swap
+                # Classes button creates a class-10 character here. Recording that
+                # as "this character's CoA class" would later hand it
+                # Essence().rows_for(10): Free-Pick's own family, AE 140 / TE 71 at
+                # 80, against a real CoA class's AE 36 / TE 35. Storing nothing
+                # makes get_class() return None, and send_coa_state() already
+                # withholds the essence and known-entry packets on None and says
+                # why. Only CoA classes 12..32 are CoA classes.
+                self.log("   CoA: %r chose class %d (%s), which is not a CoA "
+                         "class -- carrier class %d for the core, and NO CoA "
+                         "class recorded, so it will never be served CoA essence"
+                         % (name, clas,
+                            "Free-Pick hero" if clas == 10 else "?",
+                            AC_FALLBACK_CLASS))
         tail[1] = AC_FALLBACK_CLASS
         self.log("   CHAR_CREATE class %d has no playercreateinfo row -> %d"
                  % (clas, AC_FALLBACK_CLASS))
@@ -963,6 +1391,11 @@ class Session(object):
         if not self.alive:
             return
         self.alive = False
+        with self.ca_lock:
+            self.ca_armed = False
+            if self.ca_timer is not None:
+                self.ca_timer.cancel()
+                self.ca_timer = None
         if reason:
             self.log("closing: %s" % reason)
         for s in (self.client, self.core):
@@ -983,6 +1416,20 @@ def main():
         log("!! port %d is NOT on the client's endpoint allow-list -- the client "
             "will crash a few seconds after the world draws. See archive_ports.py."
             % LISTEN_PORT)
+    # Which mode this bridge is in has to be in the log, because it is otherwise
+    # invisible: the CoA bridge and the Free-Pick one are the same script run by
+    # the same python.exe on the same port, so nothing short of the command line
+    # tells them apart. The hub's start_helpers() skips a helper whose port is
+    # already open, so a bridge left over from the other profile is silently
+    # reused rather than replaced -- and the only symptom is a CoA realm serving
+    # Free-Pick classes and Free-Pick's much larger essence budget.
+    if COA_MODE:
+        log("mode: CoA -- realm flavour %s, %d custom classes, state in %s"
+            % (tuple(BRIDGE_REALM_FLAVOUR), len(COA_CLASS_NAMES),
+               os.path.basename(getattr(COA_STATE, "path", "coa_state.json"))))
+    else:
+        log("mode: Free-Pick/WCR -- realm flavour %s (pass --coa for the CoA realm)"
+            % (tuple(BRIDGE_REALM_FLAVOUR),))
     srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     srv.bind((LISTEN_HOST, LISTEN_PORT))

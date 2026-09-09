@@ -23,15 +23,20 @@ Everything below was measured against a running client, not theorised.
    (UNMODIFIED)  ───┤     realmList to          │──► 127.0.0.1:3799  auth  (shim3799.py)
                     │     127.0.0.1:3799        │
                     └──────────────────────────┘
-                                                 ──► 127.0.0.1:8085  world (world_server.py)
+                                                 ──► 127.0.0.1:8087  world (world_server.py)
 ```
 
-Two servers, both bound to loopback:
+Two servers, both bound to loopback. **The world port is not a free choice:** the
+client's `Extensions.dll` only accepts a world address of `127.0.0.1` on `8085`,
+`8087` or `8088`; anything else crashes the client at the realm list. `8085` is
+AzerothCore's default and is usually taken by a real realm, so the Python world
+server uses `8087` and the AzerothCore bridge uses `8088` (`tools/archive_ports.py`
+is the one place this is decided, and the shim advertises whichever is listening):
 
 | Server | Port | File | Job |
 |---|---|---|---|
 | Auth shim | `127.0.0.1:3799` | `server/shim3799.py` | Answer the login handshake, hand back a realm list pointing at the world server |
-| World server | `127.0.0.1:8085` | `server/world_server.py` | Auth-session, character enumeration, drop the client into the world, keep it there |
+| World server | `127.0.0.1:8087` | `server/world_server.py` | Auth-session, character enumeration, drop the client into the world, keep it there |
 
 ---
 
@@ -72,7 +77,13 @@ The address is forced in **glue Lua** — the last code that runs before the cli
 calls `ConnectToServer()`, after the in-memory CVar has already been reset. This
 is the whole redirect:
 
-**File:** `client-ascension\Interface\GlueXML\AccountLogin.lua`
+**File:** `client-ascension\Interface\GlueXML\AccountLogin.lua` — the **whole** stock
+file extracted from `Data\patch-B.MPQ` with the block below pasted in. A loose file
+containing only the block shadows the MPQ copy and removes every other
+`AccountLogin_*` function the glue XML needs (the login screen then fails to build). — the **whole** stock
+file extracted from `Data\patch-B.MPQ` with the block below pasted in. A loose file
+containing only the block shadows the MPQ copy and removes every other
+`AccountLogin_*` function the glue XML needs (the login screen then fails to build).
 
 ```lua
 ASCENSION_ARCHIVE_REALMLIST = "127.0.0.1:3799";
@@ -86,7 +97,9 @@ end
 
 `AscensionArchive_ForceRealm()` is called in two places so nothing can undo it
 before the socket opens:
-- at `AccountLogin_OnShow` (≈ line 103), and
+- in `AccountLogin_OnShow`, **after** the `if IsGMClient and realmList then ... end`
+  block that opens the function (≈ line 103 in the extracted file). That block does
+  its own `SetCVar("realmList", ...)`; a call placed above it is overwritten. And
 - **immediately before `ConnectToServer()`** inside `AccountLogin_Login()`
   (≈ line 283).
 
@@ -191,19 +204,19 @@ matter for a working local login:
   §5). Because the shim finds the client PID dynamically, you can start the shim
   before the client.
 - After the proof, the shim sends a **realm list** whose single realm points at
-  `127.0.0.1:8085` — the world server.
+  `127.0.0.1:8087` — the world server (or `:8088` when the bridge is what is listening).
 
 Success looks like this in `shim_log.txt`:
 
 ```
 hello ... account='test' (OK)
 M2 ACCEPTED
-realm list sent (127.0.0.1:8085)
+realm list sent (127.0.0.1:8087)
 ```
 
 ---
 
-## 5. Getting into the world (port 8085) — `world_server.py`
+## 5. Getting into the world (port 8087) — `world_server.py`
 
 Reaching character-select and then the world took solving several things that
 each looked like a hang:
@@ -256,7 +269,8 @@ grep -n "ASCENSION_ARCHIVE_REALMLIST" \
 # 1) Auth shim  (127.0.0.1:3799)   — run in background
 cd C:\AzerothRealm\realms\ascension; python shim3799.py TEST TEST
 
-# 2) World server (127.0.0.1:8085) — run in background
+# 2) World server (127.0.0.1:8087) — run in background. Boot prints a resolved-path
+#    report (every file it reads, ok/MISSING); fix any MISSING before launching.
 cd C:\AzerothRealm\realms\ascension; python world_server.py
 
 # 3) Client — launch DIRECTLY (not via the wrapper's launch+finally)
@@ -270,12 +284,12 @@ Start-Process -FilePath 'C:\AzerothRealm\client-ascension\Ascension.exe' `
 **Verify local, not live:**
 
 ```bash
-tail -6 shim_log.txt        # hello account='test' (OK) / M2 ACCEPTED / realm list sent (127.0.0.1:8085)
+tail -6 shim_log.txt        # hello account='test' (OK) / M2 ACCEPTED / realm list sent (127.0.0.1:8087)
 tail -4 "C:/AzerothRealm/client-ascension/Logs/connection.log"   # LOGIN_OK (not SERVER_DOWN / "information not valid")
 ```
 ```powershell
-Get-NetTCPConnection -OwningProcess <clientpid> -State Established | ? RemotePort -in 3799,8085,3724
-# want established 127.0.0.1:8085 (world). 51.210.230.10 = LIVE = wrong.
+Get-NetTCPConnection -OwningProcess <clientpid> -State Established | ? RemotePort -in 3799,8085,8087,8088,3724
+# want established 127.0.0.1:8087 (world; 8088 on the bridge route). 51.210.230.10 = LIVE = wrong.
 ```
 
 ---
@@ -292,7 +306,7 @@ is cosmetic; the glue is the lever, and the port is mandatory — a bare
 servers `ReadProcessMemory` the session keys out of it) and without a UAC prompt.
 A permissive Python **auth shim on 3799** answers the custom 641-byte SRP6-envelope
 hello (account is an XOR-obfuscated field, password is not verified) and returns a
-realm list pointing at **`127.0.0.1:8085`**, where a Python **world server** does
+realm list pointing at **`127.0.0.1:8087`**, where a Python **world server** does
 the auth-session, flips on ARC4 header crypt using the memory-read session key,
 sends the realm-flavour + `SMSG_REALM_INFO(0x9BC)` bytes that make the custom
 addons loadable, and keeps the client alive with a 10-second `SMSG_TIME_SYNC_REQ`.

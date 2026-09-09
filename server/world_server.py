@@ -28,20 +28,56 @@ Header crypt: only the packet HEADER is encrypted (WotLK).
   _clientDecrypt RC4 key = HMAC_SHA1(ServerDecryptionKey, SessionKey40)
   both streams drop the first 1024 keystream bytes before use.
 
-Run ELEVATED (RPM of the elevated client needs equal integrity). The login shim on
-3799 must ALSO be running (login + realm list flow through it first). Usage:
-    (elevated)  python world_server.py
+Run UNELEVATED, as the same user as the client, which is itself launched unelevated
+via __COMPAT_LAYER=RunAsInvoker (a medium-integrity process cannot RPM an elevated
+one, and the reverse is not needed).  The login shim on 3799 must ALSO be running
+(login + realm list flow through it first).  Usage:
+    python world_server.py
+
+Layout.  This file finds what it needs in either of two layouts, and logs every
+resolved path at startup (see report_paths) so a wrong layout is visible in the
+first twelve lines of the log instead of failing quietly later:
+  working realm dir   everything beside this file; reference DBCs under
+                      ./rexxar-reference; Ascension's server DBCs two levels up in
+                      ../../server-ascension/Data/dbc
+  public repo         this file in server/, seed/state JSON in server/data/, the
+                      helper modules in ../tools, entries.csv in ../data/ca-export
+Overrides: ASC_DATA_DIR (seed/state), ASC_CA_REF (rexxar-reference), ASC_DBC_DIR
+(the directory holding Ascension's Spell.dbc + ChrClasses.dbc).
 """
 import socket, os, sys, time, hashlib, hmac, struct, json, csv, io, mmap, copy as _copy
 import math, random
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, BASE)
+# The public repo ships chardata / archive_ports / ascension_x25519_m2 under
+# ../tools rather than beside this file.  Look there too, after BASE, so neither
+# layout needs files copied around before anything starts.
+_TOOLS_DIR = os.path.join(os.path.dirname(BASE), "tools")
+if os.path.isdir(_TOOLS_DIR) and _TOOLS_DIR not in sys.path:
+    sys.path.append(_TOOLS_DIR)
 import rpm_readk as R                    # passive RPM plumbing (VM_READ + RPM only)
 import chardata                          # per-race display ids / start positions / factions
 
+
+def _first_existing(*cands):
+    """The first candidate path that exists, else the first candidate (so the
+    later "cannot read X" log line names the place it was expected)."""
+    for p in cands:
+        if os.path.exists(p):
+            return p
+    return cands[0]
+
+
 LOG = os.path.join(BASE, "world_server_log.txt")
-CHARS_PATH = os.path.join(BASE, "characters.json")
+# Seed/state files (characters, account data, keybinds, builds, bars).  The public
+# repo ships them in ./data; the working realm dir keeps them beside this file.
+# A missing seed file does NOT stop the server -- it logs one "unreadable ... not
+# seeding" line and carries on with empty keybinds and no characters -- which is
+# exactly why the resolved directory is reported at startup.
+DATA_DIR = os.environ.get("ASC_DATA_DIR") or (
+    os.path.join(BASE, "data") if os.path.isdir(os.path.join(BASE, "data")) else BASE)
+CHARS_PATH = os.path.join(DATA_DIR, "characters.json")
 
 # ---- world-entry burst bisect switch ----------------------------------------
 # ERROR #132 cause (3) fires inside the client's per-frame "event 6" broadcast
@@ -169,26 +205,38 @@ PER_CHARACTER_BINDINGS_CACHE = 3
 ACCOUNT_DATA_NAMES = ("GLOBAL_CONFIG", "PER_CHAR_CONFIG", "GLOBAL_BINDINGS",
                       "PER_CHAR_BINDINGS", "GLOBAL_MACROS", "PER_CHAR_MACROS",
                       "PER_CHAR_LAYOUT", "PER_CHAR_CHAT")
-ACCTDATA_PATH         = os.path.join(BASE, "accountdata.json")
-DEFAULT_BINDINGS_PATH = os.path.join(BASE, "default-bindings.wtf")
-KNOWN_PATH            = os.path.join(BASE, "knownentries.json")
-BUILDS_PATH           = os.path.join(BASE, "builds.json")
-ACTIONBARS_PATH       = os.path.join(BASE, "actionbars.json")
-CA_ENTRIES_CSV        = os.path.join(BASE, "rexxar-reference", "ca-dbc-export",
-                                     "entries.csv")
-CA_CLASSTYPES_DBC     = os.path.join(BASE, "rexxar-reference", "ca-dbc",
-                                     "DBFilesClient_CharacterAdvancementClassTypes.dbc")
+ACCTDATA_PATH         = os.path.join(DATA_DIR, "accountdata.json")
+DEFAULT_BINDINGS_PATH = os.path.join(DATA_DIR, "default-bindings.wtf")
+KNOWN_PATH            = os.path.join(DATA_DIR, "knownentries.json")
+BUILDS_PATH           = os.path.join(DATA_DIR, "builds.json")
+ACTIONBARS_PATH       = os.path.join(DATA_DIR, "actionbars.json")
+# The CoA reference set: the Character-Advancement DBCs extracted from the client's
+# patch-M.MPQ plus the entries.csv exported from them.  ./rexxar-reference is the
+# working layout; the public repo ships entries.csv under ../data/ca-export and
+# leaves the DBCs to be extracted from your own client (data/MANIFEST.md).  The DBC
+# names are accepted with or without the DBFilesClient_ prefix mpqcat gives them.
+CA_REF_DIR            = os.environ.get("ASC_CA_REF") or os.path.join(BASE, "rexxar-reference")
+CA_ENTRIES_CSV        = _first_existing(
+    os.path.join(CA_REF_DIR, "ca-dbc-export", "entries.csv"),
+    os.path.join(os.path.dirname(BASE), "data", "ca-export", "entries.csv"))
+CA_CLASSTYPES_DBC     = _first_existing(
+    os.path.join(CA_REF_DIR, "ca-dbc", "DBFilesClient_CharacterAdvancementClassTypes.dbc"),
+    os.path.join(CA_REF_DIR, "ca-dbc", "CharacterAdvancementClassTypes.dbc"))
 
 # Ascension's OWN spell table -- 209,509 records to vanilla 3.3.5a's 49,839, with the
 # custom ids running to ~13.9M.  `server\Data\dbc\Spell.dbc` is the vanilla control
 # and holds none of the CA spells, so this path is spelled out in full rather than
-# derived from whichever DBC directory happens to be at hand.
-SPELL_DBC = os.path.join(os.path.dirname(os.path.dirname(BASE)),
-                         "server-ascension", "Data", "dbc", "Spell.dbc")
+# derived from whichever DBC directory happens to be at hand.  In the working layout
+# that directory is ../../server-ascension/Data/dbc; anywhere else, set ASC_DBC_DIR
+# to wherever you extracted Ascension's Spell.dbc (patch-T.MPQ) and ChrClasses.dbc
+# (patch-M.MPQ).  Both are optional: without them the spellbook and the class-name
+# table come up empty and say so in the log.
+DBC_DIR = os.environ.get("ASC_DBC_DIR") or os.path.join(
+    os.path.dirname(os.path.dirname(BASE)), "server-ascension", "Data", "dbc")
+SPELL_DBC = os.path.join(DBC_DIR, "Spell.dbc")
 # Ascension's ChrClasses.dbc -- 32 rows where vanilla has 10.  Same directory,
 # same reason to spell it out: the vanilla copy has none of the CoA classes.
-CHRCLASSES_DBC = os.path.join(os.path.dirname(os.path.dirname(BASE)),
-                              "server-ascension", "Data", "dbc", "ChrClasses.dbc")
+CHRCLASSES_DBC = os.path.join(DBC_DIR, "ChrClasses.dbc")
 DBC_HEADER             = 20             # WDBC magic + four u32 header fields
 # Stock 3.3.5a record layout (234 fields / 936 bytes), located empirically and then
 # confirmed against the vanilla column order: Name is the 17-column localised block
@@ -743,8 +791,9 @@ ITEM_TALENT_ESSENCE  = 383081
 # here: the live server streams this opcode straight out of
 # CharacterAdvancementEssence.dbc, and the archive replays the copy that ships in
 # the client's own MPQs.  See load_essence_rows() / essence_curve().
-ESSENCE_DBC = os.path.join(BASE, "rexxar-reference", "ca-dbc",
-                           "DBFilesClient_CharacterAdvancementEssence.dbc")
+ESSENCE_DBC = _first_existing(
+    os.path.join(CA_REF_DIR, "ca-dbc", "DBFilesClient_CharacterAdvancementEssence.dbc"),
+    os.path.join(CA_REF_DIR, "ca-dbc", "CharacterAdvancementEssence.dbc"))
 ESSENCE_DBC_KEY = 10                    # measured: the archive client's state[+0x14]
 ESSENCE_OVERRIDE = None                 # (ae, te) from ".essence <n>"; None = real curve
 
@@ -996,12 +1045,52 @@ def frame_pkt(enc, opcode, body):
     return hdr + body
 
 
+# Sends get their OWN deadline, separate from the receive poll.
+#
+# handle_client() polls the session socket with conn.settimeout(ARCHIVE_AURA_TICK_MIN)
+# (0.1 s) so the idle clock can run between packets.  A Python socket timeout is not
+# receive-only: it binds sendall() too, and sendall() applies it to the WHOLE write.
+# The client stops draining its socket for whole seconds right after world entry
+# (map load, then 36 addons initialising and chattering on their channels), so a
+# write that lands in that window sits in a full send buffer, 100 ms pass, sendall()
+# raises, and the session dies as
+#
+#     w001: <- CMSG_QUERY_TIME                  (0 B body)
+#     w001: handler error TimeoutError('timed out')
+#
+# a few seconds into the world: the last inbound opcode is logged, there is no
+# outbound line after it (send_pkt logs AFTER the write), and the client sits on
+# a dead socket.  Any write can trip it -- the one that did was the 12-byte
+# SMSG_QUERY_TIME_RESPONSE, not the 224 KB essence burst that had just gone out.
+# Whether it trips at all depends on how long that machine's client stalls, which
+# is why one install never saw it and another hit it on every login.
+#
+# Fix: every write goes through sock_sendall(), which raises the timeout to
+# ARCHIVE_SEND_TIMEOUT for the duration of the write and puts the poll timeout
+# back afterwards.  A client that cannot accept a packet within 30 s is gone, and
+# then the session SHOULD die.
+ARCHIVE_SEND_TIMEOUT = 30.0
+
+
+def sock_sendall(conn, buf):
+    """conn.sendall(buf) with the send deadline, restoring the poll timeout after."""
+    prev = conn.gettimeout()
+    if prev is None or prev >= ARCHIVE_SEND_TIMEOUT:
+        conn.sendall(buf)
+        return
+    conn.settimeout(ARCHIVE_SEND_TIMEOUT)
+    try:
+        conn.sendall(buf)
+    finally:
+        conn.settimeout(prev)
+
+
 def send_pkt(conn, enc, opcode, body):
     """Send an S->C packet: header + plaintext body.
     enc is an RC4 state to encrypt the header, or None for a PLAINTEXT header.
     This Ascension client keeps world headers UNENCRYPTED through char-select
     (proven by raw capture: it sends plaintext CMSG_PING), so enc is normally None."""
-    conn.sendall(frame_pkt(enc, opcode, body))
+    sock_sendall(conn, frame_pkt(enc, opcode, body))
     log("        -> %-28s (%d B body%s)"
         % (OPNAME.get(opcode, "0x%03X" % opcode), len(body), "" if enc is None else ", ENC"))
 
@@ -1016,7 +1105,7 @@ def send_batch(conn, enc, pkts, label):
     if not pkts:
         return 0
     buf = b"".join(frame_pkt(enc, opc, body) for opc, body in pkts)
-    conn.sendall(buf)
+    sock_sendall(conn, buf)
     log("        -> %-28s (%d packets, %d B, one write)" % (label, len(pkts), len(buf)))
     return len(pkts)
 
@@ -5377,6 +5466,35 @@ def handle_client(conn, cid):
             log("w%03d:    (no handler for %s -- logged, ignored)" % (cid, name))
 
 
+def report_paths():
+    """Every file this server reads, where it resolved to, and whether it is there.
+
+    Printed once at startup because the failure mode for a wrong layout is quiet:
+    a missing seed file is one "unreadable ... not seeding" line, a missing
+    reference DBC is an empty table, and the session then LOOKS healthy right up
+    to the keybinds being blank or the CoA panel having nothing to draw."""
+    rows = [("seed/state dir",          DATA_DIR),
+            ("characters",              CHARS_PATH),
+            ("account data",            ACCTDATA_PATH),
+            ("default bindings",        DEFAULT_BINDINGS_PATH),
+            ("known entries",           KNOWN_PATH),
+            ("builds",                  BUILDS_PATH),
+            ("action bars",             ACTIONBARS_PATH),
+            ("CA entries.csv",          CA_ENTRIES_CSV),
+            ("CA class-types DBC",      CA_CLASSTYPES_DBC),
+            ("CA essence DBC",          ESSENCE_DBC),
+            ("Ascension Spell.dbc",     SPELL_DBC),
+            ("Ascension ChrClasses.dbc", CHRCLASSES_DBC)]
+    missing = 0
+    for label, p in rows:
+        ok = os.path.exists(p)
+        missing += not ok
+        log("  %-26s %s  %s" % (label, "ok     " if ok else "MISSING", p))
+    if missing:
+        log("  %d path(s) MISSING -- see the layout note at the top of this file; "
+            "ASC_DATA_DIR / ASC_CA_REF / ASC_DBC_DIR override the defaults." % missing)
+
+
 def main():
     rotate_log()                            # before the first log() call of this run
     srv = socket.socket()
@@ -5389,6 +5507,7 @@ def main():
     log("=" * 70)
     log("MINIMAL WORLD SERVER on %s:%d   log-> %s" % (HOST, PORT, LOG))
     log("Shim on 3799 must also be running. Log in, pick a realm, click 'Select Realm'.")
+    report_paths()
     cid = 0
     while True:
         conn, addr = srv.accept()

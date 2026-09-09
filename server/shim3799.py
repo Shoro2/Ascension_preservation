@@ -28,6 +28,11 @@ import socket, os, sys, hashlib, hmac, secrets, select, time, threading
 BASE = os.path.dirname(os.path.abspath(__file__))
 PORT = 3799
 sys.path.insert(0, BASE)
+# The public repo ships ascension_x25519_m2 / archive_ports under ../tools rather
+# than beside this file; look there too so neither layout needs copying.
+_TOOLS_DIR = os.path.join(os.path.dirname(BASE), "tools")
+if os.path.isdir(_TOOLS_DIR) and _TOOLS_DIR not in sys.path:
+    sys.path.append(_TOOLS_DIR)
 from ascension_x25519_m2 import x25519, x25519_base  # reviewed RFC-7748 impl (same dir)
 import rpm_readk  # passive ReadProcessMemory of the client's session key K (obj+0x120)
 
@@ -121,7 +126,9 @@ def build_proof_response(M2_32):
     assert len(M2_32) == 32 and len(M2_TAIL) == 10
     return b"\x01\x00" + M2_32 + M2_TAIL          # 44 bytes
 
-from archive_ports import REALM_ADDR    # our local world server; every realm dials here
+from archive_ports import world_addr    # our local world server; every realm dials here
+# Resolved per call, NOT at import: the world this shim points at may not be
+# listening yet when the hub starts us, and the two must agree.
 
 def _rebuild_local_realmlist():
     """Replay the REAL captured Ascension realm list (live-realmlist-raw.bin) but point every
@@ -155,7 +162,7 @@ def _rebuild_local_realmlist():
             build = b""
             if flags & 0x04:                          # SpecifyBuild -> 5 trailing version bytes
                 build = body[p:p+5]; p += 5
-            new_addr = (REALM_ADDR.encode() if addr else b"")   # only real (addressed) realms
+            new_addr = (world_addr().encode() if addr else b"")   # only real (addressed) realms
             new_lock = 0                              # unlock everything for local play
             new_flags = flags & ~0x02                 # clear REALM_FLAG_OFFLINE -> show online
             out += bytes([icon, new_lock, new_flags]) + name + b"\x00" + new_addr + b"\x00"
@@ -191,7 +198,7 @@ ARCHIVE_REALM_META = "Area 52 - Free-Pick!1!0!Area52!true!1!6!13977862"
 def _minimal_local_realmlist():
     """Fallback: the real Free-Pick realm + its category-27 metadata twin."""
     real = bytes([1, 0, 0]) + (ARCHIVE_REALM_NAME + "\x00").encode() \
-           + (REALM_ADDR + "\x00").encode() \
+           + (world_addr() + "\x00").encode() \
            + b"\x00\x00\x00\x00" + bytes([1, 1, 11])
     meta = bytes([1, 0, 0]) + (ARCHIVE_REALM_META + "\x00").encode() + b"\x00" \
            + b"\x00\x00\x00\x00" + bytes([1, 27, 62])
@@ -204,7 +211,7 @@ def build_realmlist():
     if _REALMLIST_CACHE is None:
         _REALMLIST_CACHE = _rebuild_local_realmlist()
         print("      realm list built: %d bytes (real 42-record capture, addrs -> %s)"
-              % (len(_REALMLIST_CACHE), REALM_ADDR))
+              % (len(_REALMLIST_CACHE), world_addr()))
     return _REALMLIST_CACHE
 
 # ---------- variant space ----------------------------------------------------
@@ -324,7 +331,7 @@ def handle(conn, cid):
     if nxt and nxt[0] == 0x10:
         print("      ***** M2 ACCEPTED — client requested realm list (0x10)  [variant: %s] *****" % label)
         conn.sendall(build_realmlist())
-        print("      -> realm list sent (%s)" % REALM_ADDR)
+        print("      -> realm list sent (%s)" % world_addr())
         # KEEP THE AUTH SOCKET OPEN. The client holds this connection while it sits on the
         # realm-select screen; if we close it, the client treats the session as lost, opens a
         # fresh reconnect (cmd 0x02), and when that fails shows "Session Expired". Stay here and

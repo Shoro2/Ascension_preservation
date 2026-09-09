@@ -32,11 +32,16 @@ login → world → Character-Advancement path.
 4. **[`docs/KNOWN-ISSUES.md`](docs/KNOWN-ISSUES.md)** — symptom-first list of
    failures that look like server or protocol bugs but are not. Check it before
    diagnosing a hang or a silent disconnect.
+5. **[`docs/handoffs/HANDOFF-FRESH-INSTALL.md`](docs/handoffs/HANDOFF-FRESH-INSTALL.md)**
+   — **setting this up on another machine.** Written for a person (or their AI
+   assistant) standing the stack up from this repository: the +5 s in-world
+   disconnect and its fix, the repository-layout gotchas, which files you must
+   extract from your own client, and the AzerothCore build / map / DB answers.
 
 ## What works
 
 - The **unmodified `Ascension.exe`** logs into a local stack (auth shim on
-  `127.0.0.1:3799`, world server on `127.0.0.1:8085`), unelevated, no UAC, no
+  `127.0.0.1:3799`, world server on `127.0.0.1:8087`), unelevated, no UAC, no
   binary patching, no network-crypto defeat.
 - Client reaches **character-select**, **enters and stays in the world**
   (Sunstrider Isle), and touches the live service for nothing but CDN pings.
@@ -53,7 +58,7 @@ See the handoffs for the precise state and the open items.
 docs/            Protocol specs and narrative write-ups (our RE work)
   HOW-THE-REDIRECT-WORKS.md     ← how the redirect + in-game entry works
   WIRE-SPEC.md                  auth (3799) handshake, byte-level
-  WORLD-WIRE-SPEC.md            world (8085) handshake
+  WORLD-WIRE-SPEC.md            world (8087) handshake
   ASCENSION-NOTES.md            master notes: client layout, redirect, DB rebuild
   KNOWN-ISSUES.md               symptom-first: hangs/disconnects and their real causes
   protocol/                     opcode + handler maps
@@ -61,25 +66,31 @@ docs/            Protocol specs and narrative write-ups (our RE work)
 
 server/          The runnable local stack
   shim3799.py                   permissive auth shim (port 3799)
-  world_server.py               world server (port 8085)
-  ascension_bridge.py           opcode bridge / forwarder
+  world_server.py               world server (port 8087)
+  ascension_bridge.py           bridge (port 8088) onto an AzerothCore worldserver (8086)
   rpm_readk.py                  reads the session key from client memory
   *.ps1                         launch / restart helpers
   worldserver-bridge.conf       AzerothCore worldserver config (DB password REDACTED)
   data/                         server seed/state we generated (builds, chars, keybinds…)
+  rexxar-reference/ca-dbc/      NOT shipped: put the CharacterAdvancement*.dbc you extract
+                                from patch-M.MPQ here (or set ASC_CA_REF)
 
 data/            CoA CONTENT derived from the client (schema + exports)
   ca-export/                    Character-Advancement tree export (classes, tabs, edges…)
-  sanitized-for-core.json       CA entries sanitized for import
+  sanitized-for-core.json       changelog of the DBC enum clamps sanitize-for-core.py
+                                applied for the STANDALONE worldserver profile (not world content)
   MANIFEST.md                   proprietary files you must supply from your own client
 
-tools/           Reverse-engineering + analysis toolkit (~60 scripts)
+tools/           Reverse-engineering + analysis toolkit (~60 scripts). Also holds the
+                 modules the servers import (archive_ports, ascension_x25519_m2, chardata);
+                 the servers find it via ../tools, do not copy them.
 reference/       Curated screenshots + Lua/opcode reference text
   ascension_opcodes.json        opcode id → name, 2058 entries (this client)
   ascension_custom_opcodes.json 754-entry subset, 749 of them above stock's 0x500 ceiling
 area-52/         Area-52 "Free-Pick" realm-flavour specifics (see its README)
 contrib/         Tools contributed by others, adapted (see each README)
   AscensionRedirect/            WinDivert packet redirect + Frida auth-send probe
+  mpqtools/                     mpqcat / mpqfind sources (StormLib) used by tools/extract_*.py
 ```
 
 ## Requirements
@@ -88,8 +99,12 @@ contrib/         Tools contributed by others, adapted (see each README)
 - A legally obtained Project Ascension 3.3.5a client (see `data/MANIFEST.md` for
   the exact files the server reads/needs). Paths in the scripts assume a layout
   like `C:\AzerothRealm\client-ascension\…`; adjust to yours.
-- For the AzerothCore-backed world-DB route: a MySQL/MariaDB instance and stock
-  AzerothCore 3.3.5a binaries (nothing is recompiled).
+- For the AzerothCore-backed world-DB route: a MySQL/MariaDB instance and an
+  AzerothCore 3.3.5a worldserver. The bridge speaks stock build 12340 to the core,
+  so upstream `azerothcore-wotlk` `master` with no modules is enough; the
+  maintainer's own core is a locally built mod-playerbots fork, which is not
+  required. Maps/vmaps/mmaps come from a **clean stock 3.3.5a client**, never from
+  Ascension's MPQ chain. Details in `docs/handoffs/HANDOFF-FRESH-INSTALL.md` §6.
 
 ## Privacy / secrets note
 

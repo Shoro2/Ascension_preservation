@@ -22,6 +22,7 @@ ascension-const-blob.bin
 logs-bridge/
 bridge_log.txt
 shim_log.txt
+world_server_log.txt
 shim-out.log
 world-out.log
 

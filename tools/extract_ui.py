@@ -17,7 +17,7 @@ import re
 import subprocess
 import sys
 
-MPQCAT = r"C:\AzerothRealm\wowunreal\tools\mpqcat.exe"
+MPQCAT = os.environ.get("MPQCAT", r"C:\AzerothRealm\wowunreal\tools\mpqcat.exe")   # source: contrib/mpqtools/
 DATA = os.environ.get("MPQ_DATA", r"C:\AzerothRealm\client-ascension\Data")
 OUT_ROOT = r"C:\AzerothRealm\realms\ascension\rexxar-reference\ui-source"
 

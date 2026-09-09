@@ -18,7 +18,7 @@ import re
 import subprocess
 import sys
 
-MPQFIND = r"C:\AzerothRealm\wowunreal\tools\mpqfind.exe"
+MPQFIND = os.environ.get("MPQFIND", r"C:\AzerothRealm\wowunreal\tools\mpqfind.exe")   # source: contrib/mpqtools/
 # Precedence, highest first.  Every Ascension UI override lives in patch-B and
 # everything else falls through to the stock enUS chain.  Ordering archives by
 # name or by path length -- which is what mpqcat does -- silently returns the

@@ -1,10 +1,10 @@
 # Known issues
 
 Symptom-first index of failures that look like protocol or server bugs but are
-not. Both bridge crashes below are **fixed in this repository**; they are
-recorded because the evidence each one leaves behind points at the wrong
+not. The bridge crashes and the world-server send timeout below are **fixed in this
+repository**; they are recorded because the evidence each one leaves behind points at the wrong
 component, and because anyone who forked `server/ascension_bridge.py` before
-2026-09-09 still has them.
+2026-09-09 still has them (the send timeout: forks before 2026-09-10).
 
 ## Why a bridge exception looks like a server bug
 
@@ -371,3 +371,70 @@ whichever form of evidence can visibly contradict you.
 **Not affected:** anything reading numeric fields *at a known offset*. The ID
 check in issue 3 above reads field 0 as a `uint32` and never touches the string
 block, so its results stand regardless.
+
+---
+
+## 6. Session dies ~5 s after world entry: `handler error TimeoutError('timed out')`
+
+**Symptom.** World entry completes. A few seconds later `world_server_log.txt`
+ends the session like this, with **no `-> SMSG_...` line** after the last
+inbound opcode:
+
+```
+w001: <- CMSG_QUERY_TIME                  (0 B body)
+w001: handler error TimeoutError('timed out')
+```
+
+The client then tries to reconnect and the new connection opens with `0x561`
+instead of `CMSG_AUTH_SESSION` (issue 7). Reported from a fresh install on
+2026-09-09; the maintainer's own sessions never produced the line.
+
+**Wrong conclusion.** "The client stopped answering", or "the reply to
+`CMSG_QUERY_TIME` is malformed". The missing outbound line makes the second one
+look right: the server appears never to have replied.
+
+**Actual cause.** A Python socket timeout binds **sends as well as receives**.
+`handle_client()` sets `conn.settimeout(ARCHIVE_AURA_TICK_MIN)` (0.1 s) so that
+`recv()` doubles as the idle tick, and `send_pkt` / `send_batch` called
+`conn.sendall()` on the same socket bare. Any write the kernel could not absorb
+within 100 ms, which is exactly the state right after world entry when the
+224 KB essence burst is still draining and the addon suite is loading, raised
+`socket.timeout`. `send_pkt` logs *after* the send, so the outbound line is the
+one that is missing, and `handle_client` does not catch it, so `main()` closes
+the session. Whether it fires depends on how long that particular machine's
+client pauses its socket reads; on the maintainer's box it never exceeded 100 ms.
+
+**Fix.** `sock_sendall(conn, buf)`: raise the socket timeout to
+`ARCHIVE_SEND_TIMEOUT` (30 s) for the duration of the write and restore the 0.1 s
+poll afterwards. Both send helpers use it. `tools/test_send_timeout.py`
+reproduces the failure and the fix with no client (the old path dies at 0.10 s,
+the new one completes when the fake client resumes reading after 1.5 s).
+
+**General rule.** Never call `sendall()` on a socket whose timeout was chosen
+for polling. `settimeout()` is per-socket, not per-direction.
+
+## 7. Reconnect opens with opcode `0x561`, not `CMSG_AUTH_SESSION`
+
+**Symptom.**
+
+```
+w002: connection -> SMSG_AUTH_CHALLENGE (authSeed=11223344)
+w002: FIRST opcode 0x561 != CMSG_AUTH_SESSION -- non-stock opening. hdr=000c61050000
+```
+
+**Wrong conclusion.** "The header is being decoded wrongly", because
+`reference/ascension_opcodes.json` names `0x0561` `SMSG_DRAFT_ROLL_RESULT`, a
+server-to-client name.
+
+**Actual cause.** The frame is decoded correctly (size 12, opcode `0x561`, body
+`00000000 01000000`). `0x561` is a client-to-server request stub the client sends
+routinely during an in-world session and this server ignores; the opcode table
+is the client's own and its `SMSG_`/`CMSG_` prefixes are unreliable for custom
+ids. It arrives *first* because the client is trying to **resume** the world
+session that issue 6 just dropped, rather than re-authenticating. The Python
+world server has no session resume (nothing to resume into, and the ARC4 header
+crypt must be re-keyed from a fresh `CMSG_AUTH_SESSION`).
+
+**Fix.** None needed once issue 6 is fixed. If it recurs after any other drop:
+restart the client and log in again. The shim reads the session key from client
+memory at connect time, so a fresh login is the recovery path.

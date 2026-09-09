@@ -1,6 +1,13 @@
 --
 -- Ascension realm redirect WITHOUT WinDivert, admin, or a kernel driver.
 --
+-- *** THIS FILE IS A SNIPPET, NOT A DROP-IN. ***
+--   Do not save it as Interface\GlueXML\AccountLogin.lua on its own. A loose
+--   AccountLogin.lua shadows the whole MPQ copy, so one that holds only this
+--   block deletes every other AccountLogin_* function the glue XML needs and
+--   the login screen cannot build. Extract the stock file from patch-B.MPQ
+--   first, then paste this block into it (steps below).
+--
 -- WHERE THIS GOES
 --   <ClientRoot>\Interface\GlueXML\AccountLogin.lua
 --
@@ -34,10 +41,17 @@
 --   its own, before AccountLogin_OnShow, and ignores the CVar. Launch with NO
 --   autologin arguments and type the credentials at the login screen.
 --
--- Include the port. A bare "127.0.0.1" dials the WoW-default 3724.
+-- A SECOND TRAP (call-site placement)
+--   AccountLogin_OnShow opens with
+--       if IsGMClient and realmList then SetCVar("realmList", realmList) end
+--   Put the OnShow call AFTER that block's `end`, not at the top of the
+--   function, or the block overwrites the forced value.
+--
+-- Include the port. A bare "127.0.0.1" dials the WoW-default 3724. This
+-- repository's auth shim listens on 3799 (server/shim3799.py).
 --
 
-ASCENSION_ARCHIVE_REALMLIST = "127.0.0.1:3724";
+ASCENSION_ARCHIVE_REALMLIST = "127.0.0.1:3799";
 
 function AscensionArchive_Log(msg)
 	if C_Logger and C_Logger.LUA then
@@ -65,8 +79,13 @@ end
 -- once when the screen appears, and again immediately before the connect, so
 -- that anything which rewrites the CVar in between is overruled.
 --
---   function AccountLogin_OnShow()
---       AscensionArchive_ForceRealm("AccountLogin_OnShow")
+--   function AccountLogin_OnShow(self)
+--       CONNECTED_SAFE_CHECK = false
+--       local accountName, password, realmList = GetLastAccount()
+--       if IsGMClient and realmList then
+--           ... existing body ...
+--       end
+--       AscensionArchive_ForceRealm("AccountLogin_OnShow")   -- AFTER that block
 --       ... existing body ...
 --   end
 --

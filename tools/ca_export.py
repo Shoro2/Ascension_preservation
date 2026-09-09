@@ -50,8 +50,9 @@ import sys
 
 POSITION_BLOCK = 0x18E   # PositionX, PositionY, SizeX, SizeY -- four LE floats
 
-DBC_DIR = r"C:\AzerothRealm\realms\ascension\rexxar-reference\ca-dbc"
-OUT_DIR = r"C:\AzerothRealm\realms\ascension\rexxar-reference\ca-dbc-export"
+_CA_REF = os.environ.get("ASC_CA_REF", r"C:\AzerothRealm\realms\ascension\rexxar-reference")
+DBC_DIR = os.path.join(_CA_REF, "ca-dbc")            # the 7 DBFilesClient_CharacterAdvancement*.dbc from patch-M.MPQ
+OUT_DIR = os.path.join(_CA_REF, "ca-dbc-export")
 
 # column index -> exported field name.  Only columns whose meaning is evidenced
 # are named; everything else is emitted as col_NNN so nothing is fabricated.

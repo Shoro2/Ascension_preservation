@@ -20,7 +20,7 @@ obtained client — so no knowledge is lost even where the bytes are not shipped
 | `server/data/` | Server **seed/state we generated** (keybinds, action bars, characters, builds, trainer templates) |
 | `tools/` | ~60 reverse-engineering + analysis scripts |
 | `data/ca-export/` | Character-Advancement **structure** export (schema, classes, tabs, categories, edges, entries) |
-| `data/sanitized-for-core.json` | CA entries sanitized for import into an AzerothCore world DB |
+| `data/sanitized-for-core.json` | Changelog of the enum clamps `tools/sanitize-for-core.py` applied to Ascension's DBCs for the **standalone** worldserver profile (11,730 changes). Not world content; `import-world.py` does not read it |
 | `reference/` | Curated screenshots we captured, Lua/opcode reference text, raw world-opcode samples |
 
 > The `data/` and `server/data/` JSON are **derived from the client's own data**.
@@ -68,8 +68,23 @@ these as a DBC (not as loose JSON — see the "Ascension archive" notes in
 
 245 DBCs extracted from the client's MPQs, used to build the local world DB.
 Regenerate by extracting from your own MPQ chain (any MPQ tool / the scripts in
-`tools/`). Key ones the CoA work depends on: `CharacterCreationArchetypes.dbc`,
-the Character-Advancement dataset DBC, and the standard 3.3.5a set.
+`tools/`, sources for ours in `contrib/mpqtools/`). Key ones the CoA work depends
+on: `CharacterCreationArchetypes.dbc`, the Character-Advancement dataset DBC, and
+the standard 3.3.5a set.
+
+**The Python world server reads four of these directly** and boots without them
+(it says so in its resolved-path report) but then has no essence / class table:
+
+| File | Archive | Default location (override) |
+|---|---|---|
+| `DBFilesClient\CharacterAdvancementEssence.dbc` | `patch-M.MPQ` | `server/rexxar-reference/ca-dbc/` (`ASC_CA_REF`) |
+| `DBFilesClient\CharacterAdvancementClassTypes.dbc` | `patch-M.MPQ` | `server/rexxar-reference/ca-dbc/` (`ASC_CA_REF`) |
+| `DBFilesClient\ChrClasses.dbc` | `patch-M.MPQ` | `../../server-ascension/Data/dbc/` (`ASC_DBC_DIR`) |
+| `DBFilesClient\Spell.dbc` | `patch-T.MPQ` | `../../server-ascension/Data/dbc/` (`ASC_DBC_DIR`) |
+
+The CA files may keep their extracted name or carry the `DBFilesClient_` prefix;
+both are accepted. `tools/ca_export.py` wants all seven
+`CharacterAdvancement*` / `CharacterCreationArchetype*` DBCs in the same `ca-dbc/`.
 
 ### B3. Loose client content — `client-ascension\Data\Content\*.json`
 
