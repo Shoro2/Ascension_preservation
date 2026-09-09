@@ -304,10 +304,45 @@ Note the two tests point opposite ways, which is why one alone is not enough:
 the ID is caught by position and never by variance, the flag columns by
 variance and never by position.
 
-**So the NUL artifact is not what fakes "RENUMBERED" verdicts.** It can only
-blank the single row that points at offset 0 — one row per file. A whole audit
-column coming back wrong is a misidentified field, and the field layout is
-where to look.
+**So the NUL artifact is not what fakes "RENUMBERED" verdicts.** It blanks only
+the rows whose name *is* the string sitting at offset 0. String blocks
+deduplicate, so that is one row in most files and more wherever a name repeats.
+A whole audit column coming back wrong is a misidentified field, and the field
+layout is where to look.
+
+### But do not file it as harmless either
+
+Which row lands at offset 0 is arbitrary, and it can be a row that matters.
+Measured with the name column taken from the documented 3.3.5a field layout —
+stock has **zero** such rows in every file below, which is why the bug is
+invisible until you point a stock reader at these trees:
+
+| file | name column | rows blanked | string at offset 0 |
+|---|---|---|---|
+| `AreaTable` | 11 | id 1 | `Dun Morogh` |
+| `SkillLine` | 3 | id 1 | `Pet - Pit Lord` |
+| `Faction` | 23 | id 1 | `PLAYER, Human` |
+| `ChrClasses` | 4 | id 1 | `Warrior` |
+| `TalentTab` | 1 | **id 41** | **`Fire`** |
+| `Achievement` | 4 | ids 3 **and 5610** | `Son of a...` |
+
+`TalentTab` id 41 is Mage Fire — a tab real characters hold talents in, not an
+artifact row. A downstream importer whose DBC reader treated offset 0 as
+"absent" lost that name, reported it as an unresolved skip rather than an
+error, and grew a positional fallback whose comment recorded the cause as
+*"Ascension blanks some tab names in its own TalentTab.dbc"*. Ascension ships
+the name. The reader was discarding it, and the misattribution then sat in the
+code as settled fact.
+
+`Achievement` is why the count is not fixed at one: ids 3 and 5610 share the
+title `Son of a...`, the block stores it once, and both rows point at it.
+
+**A note on how the table above was produced,** because getting it wrong is the
+subject of this very section: the first attempt picked each name column by
+"most distinct values that decode to printable strings", which chose `AreaBit`
+for `AreaTable` and `InternalName` for `TalentTab` and reported 16 blanked rows
+in a file that has 1. Identify the column from the format, then sanity-check
+that the first few rows read as names.
 
 **Not affected:** anything reading numeric fields *at a known offset*. The ID
 check in issue 3 above reads field 0 as a `uint32` and never touches the string
