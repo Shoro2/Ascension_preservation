@@ -1,0 +1,647 @@
+{
+ "900000": {
+  "skillLine": 0,
+  "skillName": null,
+  "spells": 5419
+ },
+ "900001": {
+  "skillLine": 164,
+  "skillName": "Blacksmithing",
+  "spells": 283
+ },
+ "900002": {
+  "skillLine": 165,
+  "skillName": "Leatherworking",
+  "spells": 266
+ },
+ "900003": {
+  "skillLine": 773,
+  "skillName": "Inscription",
+  "spells": 241
+ },
+ "900004": {
+  "skillLine": 197,
+  "skillName": "Tailoring",
+  "spells": 206
+ },
+ "900005": {
+  "skillLine": 202,
+  "skillName": "Engineering",
+  "spells": 200
+ },
+ "900006": {
+  "skillLine": 755,
+  "skillName": "Jewelcrafting",
+  "spells": 187
+ },
+ "900007": {
+  "skillLine": 11237,
+  "skillName": "Arcane",
+  "spells": 163
+ },
+ "900008": {
+  "skillLine": 333,
+  "skillName": "Enchanting",
+  "spells": 161
+ },
+ "900009": {
+  "skillLine": 11134,
+  "skillName": "Feral Combat",
+  "spells": 135
+ },
+ "900010": {
+  "skillLine": 171,
+  "skillName": "Alchemy",
+  "spells": 112
+ },
+ "900011": {
+  "skillLine": 11056,
+  "skillName": "Holy",
+  "spells": 110
+ },
+ "900012": {
+  "skillLine": 11373,
+  "skillName": "Enhancement",
+  "spells": 102
+ },
+ "900013": {
+  "skillLine": 86,
+  "skillName": "Flameweaving",
+  "spells": 100
+ },
+ "900014": {
+  "skillLine": 11375,
+  "skillName": "Elemental Combat",
+  "spells": 100
+ },
+ "900015": {
+  "skillLine": 73,
+  "skillName": "Sanguine",
+  "spells": 99
+ },
+ "900016": {
+  "skillLine": 11253,
+  "skillName": "Assassination",
+  "spells": 97
+ },
+ "900017": {
+  "skillLine": 11574,
+  "skillName": "Balance",
+  "spells": 96
+ },
+ "900018": {
+  "skillLine": 61,
+  "skillName": "Lightning",
+  "spells": 93
+ },
+ "900019": {
+  "skillLine": 757,
+  "skillName": "Woodworking",
+  "spells": 91
+ },
+ "900020": {
+  "skillLine": 11008,
+  "skillName": "Fire",
+  "spells": 90
+ },
+ "900021": {
+  "skillLine": 11573,
+  "skillName": "Restoration",
+  "spells": 89
+ },
+ "900022": {
+  "skillLine": 11355,
+  "skillName": "Affliction",
+  "spells": 88
+ },
+ "900023": {
+  "skillLine": 11374,
+  "skillName": "Restoration",
+  "spells": 87
+ },
+ "900024": {
+  "skillLine": 100,
+  "skillName": "Invention",
+  "spells": 83
+ },
+ "900025": {
+  "skillLine": 11594,
+  "skillName": "Holy",
+  "spells": 83
+ },
+ "900026": {
+  "skillLine": 48,
+  "skillName": "Voodoo",
+  "spells": 80
+ },
+ "900027": {
+  "skillLine": 11163,
+  "skillName": "Marksmanship",
+  "spells": 79
+ },
+ "900028": {
+  "skillLine": 11354,
+  "skillName": "Demonology",
+  "spells": 78
+ },
+ "900029": {
+  "skillLine": 11593,
+  "skillName": "Destruction",
+  "spells": 75
+ },
+ "900030": {
+  "skillLine": 11078,
+  "skillName": "Shadow Magic",
+  "spells": 75
+ },
+ "900031": {
+  "skillLine": 96,
+  "skillName": "Blessings",
+  "spells": 73
+ },
+ "900032": {
+  "skillLine": 41,
+  "skillName": "Brutality",
+  "spells": 71
+ },
+ "900033": {
+  "skillLine": 11006,
+  "skillName": "Frost",
+  "spells": 69
+ },
+ "900034": {
+  "skillLine": 112,
+  "skillName": "Geomancy",
+  "spells": 67
+ },
+ "900035": {
+  "skillLine": 49,
+  "skillName": "Brewing",
+  "spells": 67
+ },
+ "900036": {
+  "skillLine": 53,
+  "skillName": "Infernal",
+  "spells": 67
+ },
+ "900037": {
+  "skillLine": 499,
+  "skillName": "Vizier",
+  "spells": 66
+ },
+ "900038": {
+  "skillLine": 11051,
+  "skillName": "Survival",
+  "spells": 66
+ },
+ "900039": {
+  "skillLine": 116,
+  "skillName": "Glyphic",
+  "spells": 64
+ },
+ "900040": {
+  "skillLine": 105,
+  "skillName": "Fortitude",
+  "spells": 64
+ },
+ "900041": {
+  "skillLine": 11267,
+  "skillName": "Protection",
+  "spells": 64
+ },
+ "900042": {
+  "skillLine": 77,
+  "skillName": "Brigand",
+  "spells": 63
+ },
+ "900043": {
+  "skillLine": 94,
+  "skillName": "Piety",
+  "spells": 63
+ },
+ "900044": {
+  "skillLine": 185,
+  "skillName": "Cooking",
+  "spells": 62
+ },
+ "900045": {
+  "skillLine": 47,
+  "skillName": "Ancestry",
+  "spells": 60
+ },
+ "900046": {
+  "skillLine": 63,
+  "skillName": "Maelstrom",
+  "spells": 60
+ },
+ "900047": {
+  "skillLine": 80,
+  "skillName": "Artificer",
+  "spells": 60
+ },
+ "900048": {
+  "skillLine": 11256,
+  "skillName": "Fury",
+  "spells": 60
+ },
+ "900049": {
+  "skillLine": 68,
+  "skillName": "Inspiration",
+  "spells": 59
+ },
+ "900050": {
+  "skillLine": 90,
+  "skillName": "Heretic",
+  "spells": 59
+ },
+ "900051": {
+  "skillLine": 117,
+  "skillName": "Engravement",
+  "spells": 58
+ },
+ "900052": {
+  "skillLine": 82,
+  "skillName": "Death",
+  "spells": 57
+ },
+ "900053": {
+  "skillLine": 89,
+  "skillName": "Corruption",
+  "spells": 56
+ },
+ "900054": {
+  "skillLine": 11613,
+  "skillName": "Discipline",
+  "spells": 56
+ },
+ "900055": {
+  "skillLine": 42,
+  "skillName": "Headhunting",
+  "spells": 55
+ },
+ "900056": {
+  "skillLine": 70,
+  "skillName": "Zealot",
+  "spells": 54
+ },
+ "900057": {
+  "skillLine": 76,
+  "skillName": "Archery",
+  "spells": 54
+ },
+ "900058": {
+  "skillLine": 114,
+  "skillName": "Grovekeeper",
+  "spells": 54
+ },
+ "900059": {
+  "skillLine": 83,
+  "skillName": "Rime",
+  "spells": 53
+ },
+ "900060": {
+  "skillLine": 65,
+  "skillName": "Hellfire",
+  "spells": 53
+ },
+ "900061": {
+  "skillLine": 60,
+  "skillName": "Inquisition",
+  "spells": 53
+ },
+ "900062": {
+  "skillLine": 11184,
+  "skillName": "Retribution",
+  "spells": 53
+ },
+ "900063": {
+  "skillLine": 72,
+  "skillName": "Crusader",
+  "spells": 52
+ },
+ "900064": {
+  "skillLine": 505,
+  "skillName": "Bushcraft",
+  "spells": 51
+ },
+ "900065": {
+  "skillLine": 81,
+  "skillName": "Time",
+  "spells": 51
+ },
+ "900066": {
+  "skillLine": 103,
+  "skillName": "Rot",
+  "spells": 50
+ },
+ "900067": {
+  "skillLine": 92,
+  "skillName": "Moon Priest",
+  "spells": 49
+ },
+ "900068": {
+  "skillLine": 62,
+  "skillName": "Wind",
+  "spells": 49
+ },
+ "900069": {
+  "skillLine": 58,
+  "skillName": "Boltslinger",
+  "spells": 48
+ },
+ "900070": {
+  "skillLine": 85,
+  "skillName": "Incineration",
+  "spells": 46
+ },
+ "900071": {
+  "skillLine": 11026,
+  "skillName": "Arms",
+  "spells": 46
+ },
+ "900072": {
+  "skillLine": 93,
+  "skillName": "Sentinel",
+  "spells": 45
+ },
+ "900073": {
+  "skillLine": 107,
+  "skillName": "Soul",
+  "spells": 45
+ },
+ "900074": {
+  "skillLine": 500,
+  "skillName": "Fleshweaver",
+  "spells": 45
+ },
+ "900075": {
+  "skillLine": 110,
+  "skillName": "Wildwalker",
+  "spells": 44
+ },
+ "900076": {
+  "skillLine": 87,
+  "skillName": "Draconic",
+  "spells": 44
+ },
+ "900077": {
+  "skillLine": 69,
+  "skillName": "Gladiator",
+  "spells": 42
+ },
+ "900078": {
+  "skillLine": 186,
+  "skillName": "Mining",
+  "spells": 41
+ },
+ "900079": {
+  "skillLine": 11038,
+  "skillName": "Combat",
+  "spells": 41
+ },
+ "900080": {
+  "skillLine": 11050,
+  "skillName": "Beast Mastery",
+  "spells": 41
+ },
+ "900081": {
+  "skillLine": 104,
+  "skillName": "Stalking",
+  "spells": 40
+ },
+ "900082": {
+  "skillLine": 52,
+  "skillName": "Slayer",
+  "spells": 40
+ },
+ "900083": {
+  "skillLine": 79,
+  "skillName": "Infinite",
+  "spells": 40
+ },
+ "900084": {
+  "skillLine": 88,
+  "skillName": "Godblade",
+  "spells": 40
+ },
+ "900085": {
+  "skillLine": 67,
+  "skillName": "Vanguard",
+  "spells": 39
+ },
+ "900086": {
+  "skillLine": 502,
+  "skillName": "Warden",
+  "spells": 39
+ },
+ "900087": {
+  "skillLine": 78,
+  "skillName": "Farstrider",
+  "spells": 37
+ },
+ "900088": {
+  "skillLine": 106,
+  "skillName": "Harvest",
+  "spells": 36
+ },
+ "900089": {
+  "skillLine": 74,
+  "skillName": "Accursed",
+  "spells": 34
+ },
+ "900090": {
+  "skillLine": 75,
+  "skillName": "Eternal",
+  "spells": 34
+ },
+ "900091": {
+  "skillLine": 51,
+  "skillName": "Shadowhunting",
+  "spells": 32
+ },
+ "900092": {
+  "skillLine": 108,
+  "skillName": "Domination",
+  "spells": 32
+ },
+ "900093": {
+  "skillLine": 71,
+  "skillName": "Oathkeeper",
+  "spells": 32
+ },
+ "900094": {
+  "skillLine": 11257,
+  "skillName": "Protection",
+  "spells": 32
+ },
+ "900095": {
+  "skillLine": 119,
+  "skillName": "Riftblade",
+  "spells": 30
+ },
+ "900096": {
+  "skillLine": 11772,
+  "skillName": "Unholy",
+  "spells": 30
+ },
+ "900097": {
+  "skillLine": 501,
+  "skillName": "Black Knight",
+  "spells": 29
+ },
+ "900098": {
+  "skillLine": 97,
+  "skillName": "Seraphim",
+  "spells": 28
+ },
+ "900099": {
+  "skillLine": 102,
+  "skillName": "Mechanics",
+  "spells": 28
+ },
+ "900100": {
+  "skillLine": 498,
+  "skillName": "Valkyrie",
+  "spells": 28
+ },
+ "900101": {
+  "skillLine": 64,
+  "skillName": "War",
+  "spells": 27
+ },
+ "900102": {
+  "skillLine": 99,
+  "skillName": "Demolition",
+  "spells": 27
+ },
+ "900103": {
+  "skillLine": 59,
+  "skillName": "Houndmaster",
+  "spells": 26
+ },
+ "900104": {
+  "skillLine": 57,
+  "skillName": "Tyrant",
+  "spells": 26
+ },
+ "900105": {
+  "skillLine": 91,
+  "skillName": "Moon Guard",
+  "spells": 24
+ },
+ "900106": {
+  "skillLine": 11771,
+  "skillName": "Frost",
+  "spells": 24
+ },
+ "900107": {
+  "skillLine": 84,
+  "skillName": "Animation",
+  "spells": 22
+ },
+ "900108": {
+  "skillLine": 497,
+  "skillName": "Dreadnought",
+  "spells": 21
+ },
+ "900109": {
+  "skillLine": 11039,
+  "skillName": "Subtlety",
+  "spells": 20
+ },
+ "900110": {
+  "skillLine": 11770,
+  "skillName": "Blood",
+  "spells": 19
+ },
+ "900111": {
+  "skillLine": 129,
+  "skillName": "First Aid",
+  "spells": 18
+ },
+ "900112": {
+  "skillLine": 496,
+  "skillName": "Mountain King",
+  "spells": 16
+ },
+ "900113": {
+  "skillLine": 525,
+  "skillName": "Fel Rifts",
+  "spells": 11
+ },
+ "900114": {
+  "skillLine": 66,
+  "skillName": "Defiance",
+  "spells": 11
+ },
+ "900115": {
+  "skillLine": 492,
+  "skillName": "Witch Hunter",
+  "spells": 10
+ },
+ "900116": {
+  "skillLine": 762,
+  "skillName": "Riding",
+  "spells": 9
+ },
+ "900117": {
+  "skillLine": 484,
+  "skillName": "Venomancer",
+  "spells": 8
+ },
+ "900118": {
+  "skillLine": 732,
+  "skillName": "Woodcutting",
+  "spells": 8
+ },
+ "900119": {
+  "skillLine": 526,
+  "skillName": "Mounted Combat",
+  "spells": 7
+ },
+ "900120": {
+  "skillLine": 182,
+  "skillName": "Herbalism",
+  "spells": 5
+ },
+ "900121": {
+  "skillLine": 356,
+  "skillName": "Fishing",
+  "spells": 5
+ },
+ "900122": {
+  "skillLine": 393,
+  "skillName": "Skinning",
+  "spells": 5
+ },
+ "900123": {
+  "skillLine": 184,
+  "skillName": "Paladin",
+  "spells": 5
+ },
+ "900124": {
+  "skillLine": 34090,
+  "skillName": null,
+  "spells": 2
+ },
+ "900125": {
+  "skillLine": 293,
+  "skillName": "Plate Mail",
+  "spells": 1
+ },
+ "900126": {
+  "skillLine": 33388,
+  "skillName": null,
+  "spells": 1
+ },
+ "900127": {
+  "skillLine": 33391,
+  "skillName": null,
+  "spells": 1
+ },
+ "900128": {
+  "skillLine": 478,
+  "skillName": "Starcaller",
+  "spells": 1
+ }
+}

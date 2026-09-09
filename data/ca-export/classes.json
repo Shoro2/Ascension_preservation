@@ -1,0 +1,232 @@
+[
+ {
+  "ID": 1,
+  "Name": "None",
+  "Display": "None"
+ },
+ {
+  "ID": 2,
+  "Name": "Hunter",
+  "Display": "Hunter"
+ },
+ {
+  "ID": 3,
+  "Name": "Warrior",
+  "Display": "Warrior"
+ },
+ {
+  "ID": 4,
+  "Name": "Rogue",
+  "Display": "Rogue"
+ },
+ {
+  "ID": 5,
+  "Name": "Mage",
+  "Display": "Mage"
+ },
+ {
+  "ID": 6,
+  "Name": "Priest",
+  "Display": "Priest"
+ },
+ {
+  "ID": 7,
+  "Name": "Warlock",
+  "Display": "Warlock"
+ },
+ {
+  "ID": 8,
+  "Name": "Druid",
+  "Display": "Druid"
+ },
+ {
+  "ID": 9,
+  "Name": "Shaman",
+  "Display": "Shaman"
+ },
+ {
+  "ID": 10,
+  "Name": "Paladin",
+  "Display": "Paladin"
+ },
+ {
+  "ID": 11,
+  "Name": "DeathKnight",
+  "Display": "Death Knight"
+ },
+ {
+  "ID": 12,
+  "Name": "General",
+  "Display": "General"
+ },
+ {
+  "ID": 13,
+  "Name": "Hero",
+  "Display": "Hero"
+ },
+ {
+  "ID": 14,
+  "Name": "Barbarian",
+  "Display": "Barbarian"
+ },
+ {
+  "ID": 15,
+  "Name": "WitchDoctor",
+  "Display": "Witch Doctor"
+ },
+ {
+  "ID": 16,
+  "Name": "DemonHunter",
+  "Display": "Demon Hunter"
+ },
+ {
+  "ID": 17,
+  "Name": "WitchHunter",
+  "Display": "Witch Hunter"
+ },
+ {
+  "ID": 18,
+  "Name": "Stormbringer",
+  "Display": "Stomrbringer"
+ },
+ {
+  "ID": 19,
+  "Name": "KnightOfXoroth",
+  "Display": "Knight of Xoroth"
+ },
+ {
+  "ID": 20,
+  "Name": "Guardian",
+  "Display": "Guardian"
+ },
+ {
+  "ID": 21,
+  "Name": "Monk",
+  "Display": "Monk"
+ },
+ {
+  "ID": 22,
+  "Name": "SonOfArugal",
+  "Display": "Son Of Arugal"
+ },
+ {
+  "ID": 23,
+  "Name": "Ranger",
+  "Display": "Ranger"
+ },
+ {
+  "ID": 24,
+  "Name": "Chronomancer",
+  "Display": "Chronomancer"
+ },
+ {
+  "ID": 25,
+  "Name": "Necromancer",
+  "Display": "Necromancer"
+ },
+ {
+  "ID": 26,
+  "Name": "Pyromancer",
+  "Display": "Pyromancer"
+ },
+ {
+  "ID": 27,
+  "Name": "Cultist",
+  "Display": "Cultist"
+ },
+ {
+  "ID": 28,
+  "Name": "Starcaller",
+  "Display": "Starcaller"
+ },
+ {
+  "ID": 29,
+  "Name": "SunCleric",
+  "Display": "Sun Cleric"
+ },
+ {
+  "ID": 30,
+  "Name": "Tinker",
+  "Display": "Tinker"
+ },
+ {
+  "ID": 31,
+  "Name": "Primalist",
+  "Display": "Primalist"
+ },
+ {
+  "ID": 32,
+  "Name": "Reaper",
+  "Display": "Reaper"
+ },
+ {
+  "ID": 33,
+  "Name": "Venomancer",
+  "Display": "Venomancer"
+ },
+ {
+  "ID": 34,
+  "Name": "Runemaster",
+  "Display": "Runemaster"
+ },
+ {
+  "ID": 35,
+  "Name": "ConquestOfAzeroth",
+  "Display": "Conquest of Azeroth"
+ },
+ {
+  "ID": 36,
+  "Name": "RebornHunter",
+  "Display": "Hunter"
+ },
+ {
+  "ID": 37,
+  "Name": "RebornWarrior",
+  "Display": "Warrior"
+ },
+ {
+  "ID": 38,
+  "Name": "RebornRogue",
+  "Display": "Rogue"
+ },
+ {
+  "ID": 39,
+  "Name": "RebornMage",
+  "Display": "Mage"
+ },
+ {
+  "ID": 40,
+  "Name": "RebornPriest",
+  "Display": "Priest"
+ },
+ {
+  "ID": 41,
+  "Name": "RebornWarlock",
+  "Display": "Warlock"
+ },
+ {
+  "ID": 42,
+  "Name": "RebornDruid",
+  "Display": "Druid"
+ },
+ {
+  "ID": 43,
+  "Name": "RebornShaman",
+  "Display": "Shaman"
+ },
+ {
+  "ID": 44,
+  "Name": "RebornPaladin",
+  "Display": "Paladin"
+ },
+ {
+  "ID": 45,
+  "Name": "RebornDeathKnight",
+  "Display": "Death Knight of Xoroth"
+ },
+ {
+  "ID": 46,
+  "Name": "RebornGeneral",
+  "Display": "General"
+ }
+]

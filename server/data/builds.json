@@ -1,0 +1,1661 @@
+{
+ "1ef4bae3-780c-444c-833f-ecf46149de94": {
+  "name": "Hoplite",
+  "entries": [
+   {
+    "id": 4871,
+    "rank": 1
+   },
+   {
+    "id": 4987,
+    "rank": 1
+   },
+   {
+    "id": 5103,
+    "rank": 1
+   },
+   {
+    "id": 5116,
+    "rank": 1
+   },
+   {
+    "id": 5195,
+    "rank": 1
+   },
+   {
+    "id": 5331,
+    "rank": 1
+   },
+   {
+    "id": 5974,
+    "rank": 1
+   },
+   {
+    "id": 5995,
+    "rank": 1
+   },
+   {
+    "id": 5996,
+    "rank": 1
+   },
+   {
+    "id": 5997,
+    "rank": 1
+   },
+   {
+    "id": 5998,
+    "rank": 1
+   },
+   {
+    "id": 5999,
+    "rank": 1
+   },
+   {
+    "id": 6001,
+    "rank": 1
+   },
+   {
+    "id": 6551,
+    "rank": 1
+   },
+   {
+    "id": 6829,
+    "rank": 1
+   },
+   {
+    "id": 6890,
+    "rank": 1
+   },
+   {
+    "id": 6992,
+    "rank": 1
+   },
+   {
+    "id": 6996,
+    "rank": 1
+   },
+   {
+    "id": 6998,
+    "rank": 1
+   },
+   {
+    "id": 7034,
+    "rank": 1
+   },
+   {
+    "id": 8354,
+    "rank": 1
+   },
+   {
+    "id": 8355,
+    "rank": 1
+   },
+   {
+    "id": 9987,
+    "rank": 1
+   },
+   {
+    "id": 9995,
+    "rank": 1
+   },
+   {
+    "id": 29201,
+    "rank": 1
+   },
+   {
+    "id": 29203,
+    "rank": 1
+   },
+   {
+    "id": 29209,
+    "rank": 1
+   },
+   {
+    "id": 29440,
+    "rank": 1
+   },
+   {
+    "id": 29777,
+    "rank": 1
+   },
+   {
+    "id": 29813,
+    "rank": 1
+   },
+   {
+    "id": 30583,
+    "rank": 1
+   },
+   {
+    "id": 30839,
+    "rank": 1
+   },
+   {
+    "id": 30869,
+    "rank": 1
+   },
+   {
+    "id": 31113,
+    "rank": 1
+   },
+   {
+    "id": 31235,
+    "rank": 1
+   },
+   {
+    "id": 34987,
+    "rank": 1
+   }
+  ],
+  "roles": 8
+ },
+ "c0ffee00-1111-4000-8000-feed0000cafe": {
+  "name": "Free-Pick Firestarter",
+  "subtext": "Fire Mage entries, learnable by any Hero",
+  "description": "Archive-authored Free-Pick build: eight Fire talents, Scorch (Scorched Earth), and four General picks.",
+  "author": "Archive",
+  "icon": "Spell_Fire_FlameBolt",
+  "entries": [
+   {
+    "id": 395,
+    "rank": 1
+   },
+   {
+    "id": 396,
+    "rank": 1
+   },
+   {
+    "id": 397,
+    "rank": 1
+   },
+   {
+    "id": 398,
+    "rank": 1
+   },
+   {
+    "id": 399,
+    "rank": 1
+   },
+   {
+    "id": 400,
+    "rank": 1
+   },
+   {
+    "id": 402,
+    "rank": 1
+   },
+   {
+    "id": 403,
+    "rank": 1
+   },
+   {
+    "id": 1398,
+    "rank": 1
+   },
+   {
+    "id": 220,
+    "rank": 1
+   },
+   {
+    "id": 1588,
+    "rank": 1
+   },
+   {
+    "id": 1892,
+    "rank": 1
+   },
+   {
+    "id": 1936,
+    "rank": 1
+   }
+  ],
+  "roles": 8,
+  "primaryStat": 3
+ },
+ "c483eaf6-a46d-49e4-a55a-ae807d02d279": {
+  "name": "Dawnkeeper",
+  "subtext": "Healer archetype",
+  "description": "Click for more Info.   Holy healer who radiates healing from their Beacon of Light.",
+  "author": "Ascension",
+  "icon": "Ability_Paladin_BeaconofLight",
+  "roles": 4,
+  "primaryStat": 4,
+  "entries": [
+   {
+    "id": 2709,
+    "rank": 1
+   },
+   {
+    "id": 3741,
+    "rank": 1
+   },
+   {
+    "id": 2704,
+    "rank": 1
+   }
+  ]
+ },
+ "a5957bf3-5e54-468b-82b7-29f26c3fa6d0": {
+  "name": "Eternal Caretaker",
+  "subtext": "Healer archetype",
+  "description": "Click for more Info.   Holy healer who fires sweeping waves of healing.",
+  "author": "Ascension",
+  "icon": "ability_priest_halo",
+  "roles": 4,
+  "primaryStat": 4,
+  "entries": [
+   {
+    "id": 2796,
+    "rank": 1
+   },
+   {
+    "id": 2797,
+    "rank": 1
+   },
+   {
+    "id": 1523,
+    "rank": 1
+   },
+   {
+    "id": 3586,
+    "rank": 1
+   }
+  ]
+ },
+ "f4522101-5b74-43ee-aa54-5a742e60ebfa": {
+  "name": "Sacred Sentinel",
+  "subtext": "Healer archetype",
+  "description": "Click for more Info.   Holy healer who conjures spheres of light to heal allies.",
+  "author": "Ascension",
+  "icon": "ability_priest_spiritoftheredeemer",
+  "roles": 4,
+  "primaryStat": 4,
+  "entries": [
+   {
+    "id": 2709,
+    "rank": 1
+   },
+   {
+    "id": 1557,
+    "rank": 1
+   },
+   {
+    "id": 36858,
+    "rank": 1
+   },
+   {
+    "id": 3412,
+    "rank": 1
+   }
+  ]
+ },
+ "63b2be6f-d76f-4a36-b56b-7472a6661105": {
+  "name": "Tide Mender",
+  "subtext": "Healer archetype",
+  "description": "Click for more Info.   Nature healer who spreads a mending Riptide across their party.",
+  "author": "Ascension",
+  "icon": "Spell_Nature_Riptide",
+  "roles": 4,
+  "primaryStat": 4,
+  "entries": [
+   {
+    "id": 2678,
+    "rank": 1
+   },
+   {
+    "id": 3696,
+    "rank": 1
+   },
+   {
+    "id": 2747,
+    "rank": 1
+   },
+   {
+    "id": 3484,
+    "rank": 1
+   }
+  ]
+ },
+ "1b11581f-253f-426f-82d1-b8e5e25a7c96": {
+  "name": "Grove Keeper",
+  "subtext": "Healer archetype",
+  "description": "Click for more Info.   Nature healer who overflows healing to multiple party members at once.",
+  "author": "Ascension",
+  "icon": "ability_druid_giftoftheearthmother",
+  "roles": 4,
+  "primaryStat": 4,
+  "entries": [
+   {
+    "id": 2842,
+    "rank": 1
+   },
+   {
+    "id": 2725,
+    "rank": 1
+   },
+   {
+    "id": 2747,
+    "rank": 1
+   },
+   {
+    "id": 3484,
+    "rank": 1
+   }
+  ]
+ },
+ "ffc7753e-ffec-49e3-9417-4e046595e075": {
+  "name": "Hierophant",
+  "subtext": "Healer archetype",
+  "description": "Click for more Info.   Holy healer who cultivates powerful healing-over-time effects.",
+  "author": "Ascension",
+  "icon": "ability_paladin_blindinglight2",
+  "roles": 4,
+  "primaryStat": 4,
+  "entries": [
+   {
+    "id": 2796,
+    "rank": 1
+   },
+   {
+    "id": 2674,
+    "rank": 1
+   },
+   {
+    "id": 2797,
+    "rank": 1
+   },
+   {
+    "id": 3647,
+    "rank": 1
+   }
+  ]
+ },
+ "87575f0f-f6bb-42b4-8cac-37f6ecade09a": {
+  "name": "Cryotherapist",
+  "subtext": "Healer archetype",
+  "description": "Click for more Info.   Chill enemies and heal allies by mixing Frost and Holy healing.",
+  "author": "Ascension",
+  "icon": "spell_deathknight_frostfever",
+  "roles": 4,
+  "primaryStat": 4,
+  "entries": [
+   {
+    "id": 2664,
+    "rank": 1
+   },
+   {
+    "id": 2796,
+    "rank": 1
+   },
+   {
+    "id": 1491,
+    "rank": 1
+   },
+   {
+    "id": 2704,
+    "rank": 1
+   }
+  ]
+ },
+ "d5bf1cc2-ed7e-4094-a239-4048b488cd71": {
+  "name": "Tree of Wrath",
+  "subtext": "Healer archetype",
+  "description": "Click for more Info.   Shock foes with healing lightning that damages them.",
+  "author": "Ascension",
+  "icon": "ability_druid_treeoflife_Red",
+  "roles": 4,
+  "primaryStat": 4,
+  "entries": [
+   {
+    "id": 2683,
+    "rank": 1
+   },
+   {
+    "id": 2678,
+    "rank": 1
+   },
+   {
+    "id": 1468,
+    "rank": 1
+   }
+  ]
+ },
+ "446ab71a-f80d-4aa3-a9f8-d5b333302b9c": {
+  "name": "Grove Ranger",
+  "subtext": "Healer archetype",
+  "description": "Click for more Info.   Shoot blooming arrows that heal allies and cripple foes.",
+  "author": "Ascension",
+  "icon": "ability_druid_healinginstincts",
+  "roles": 4,
+  "primaryStat": 4,
+  "entries": [
+   {
+    "id": 1488,
+    "rank": 1
+   },
+   {
+    "id": 2842,
+    "rank": 1
+   },
+   {
+    "id": 1489,
+    "rank": 1
+   },
+   {
+    "id": 3665,
+    "rank": 1
+   }
+  ]
+ },
+ "9375977c-24a8-4e8c-b772-b924711438bc": {
+  "name": "Steward of Eternity",
+  "subtext": "Healer archetype",
+  "description": "Click for more Info.   Turn back the clock and heal wounds with the sands of time.",
+  "author": "Ascension",
+  "icon": "spell_azerite_essence06",
+  "roles": 4,
+  "primaryStat": 4,
+  "entries": [
+   {
+    "id": 1818,
+    "rank": 1
+   },
+   {
+    "id": 1819,
+    "rank": 1
+   },
+   {
+    "id": 1820,
+    "rank": 1
+   },
+   {
+    "id": 36868,
+    "rank": 1
+   }
+  ]
+ },
+ "189df2a3-7042-49b2-b2f7-6d50ea12f556": {
+  "name": "Fire Sage",
+  "subtext": "Healer archetype",
+  "description": "Click for more Info.   Incinerate foes and heal allies with cauterizing flames.",
+  "author": "Ascension",
+  "icon": "spell_fire_flamebolt",
+  "roles": 4,
+  "primaryStat": 4,
+  "entries": [
+   {
+    "id": 1469,
+    "rank": 1
+   },
+   {
+    "id": 2802,
+    "rank": 1
+   },
+   {
+    "id": 2928,
+    "rank": 1
+   },
+   {
+    "id": 3586,
+    "rank": 1
+   }
+  ]
+ },
+ "bbb7a620-06dd-4266-abf7-b3da935a9525": {
+  "name": "Vampire Lord",
+  "subtext": "Healer archetype",
+  "description": "Click for more Info.   Siphon life from foes and grant it to your allies.",
+  "author": "Ascension",
+  "icon": "Spell_Shadow_ImprovedVampiricEmbrace",
+  "roles": 4,
+  "primaryStat": 4,
+  "entries": [
+   {
+    "id": 2190,
+    "rank": 1
+   },
+   {
+    "id": 1492,
+    "rank": 1
+   },
+   {
+    "id": 1706,
+    "rank": 1
+   },
+   {
+    "id": 1493,
+    "rank": 1
+   }
+  ]
+ },
+ "05901096-411d-4810-8e07-19c58128fdc8": {
+  "name": "Blade Warden",
+  "subtext": "Tank archetype",
+  "description": "Click for more Info.   Defend allies with a massive blade.",
+  "author": "Ascension",
+  "icon": "Ability_Warrior_Challange",
+  "roles": 2,
+  "primaryStat": 0,
+  "entries": [
+   {
+    "id": 3459,
+    "rank": 1
+   },
+   {
+    "id": 3735,
+    "rank": 1
+   },
+   {
+    "id": 3167,
+    "rank": 1
+   },
+   {
+    "id": 3166,
+    "rank": 1
+   }
+  ]
+ },
+ "5151922f-e024-44e3-8c8a-fbb048cbf254": {
+  "name": "Bulwark",
+  "subtext": "Tank archetype",
+  "description": "Click for more Info.   An indomitable bulwark that defends allies with a shield of wind.",
+  "author": "Ascension",
+  "icon": "ability_racial_forceshield",
+  "roles": 2,
+  "primaryStat": 0,
+  "entries": [
+   {
+    "id": 1572,
+    "rank": 1
+   },
+   {
+    "id": 2870,
+    "rank": 1
+   },
+   {
+    "id": 2965,
+    "rank": 1
+   },
+   {
+    "id": 3627,
+    "rank": 1
+   }
+  ]
+ },
+ "58af0250-fe83-4afb-9a48-f9ba48ba9de6": {
+  "name": "Swashbuckler",
+  "subtext": "Tank archetype",
+  "description": "Click for more Info.   An agile swordsman who parries incoming attacks.",
+  "author": "Ascension",
+  "icon": "inv_helm_cloth_b_01pirate_black",
+  "roles": 2,
+  "primaryStat": 1,
+  "entries": [
+   {
+    "id": 1496,
+    "rank": 1
+   },
+   {
+    "id": 2870,
+    "rank": 1
+   },
+   {
+    "id": 1752,
+    "rank": 1
+   }
+  ]
+ },
+ "b8d832b9-2f84-4a5d-92c2-8d864b83457c": {
+  "name": "Relentless",
+  "subtext": "Tank archetype",
+  "description": "Click for more Info.   A relentless fighter who uses their shield for combo attacks.",
+  "author": "Ascension",
+  "icon": "ability_rogue_ruthlessness",
+  "roles": 2,
+  "primaryStat": 0,
+  "entries": [
+   {
+    "id": 2801,
+    "rank": 1
+   },
+   {
+    "id": 2909,
+    "rank": 1
+   },
+   {
+    "id": 3244,
+    "rank": 1
+   },
+   {
+    "id": 2965,
+    "rank": 1
+   }
+  ]
+ },
+ "e57ef0d4-2e26-4e89-9b5b-da4f5ae21ad6": {
+  "name": "Vanguard Sentinel",
+  "subtext": "Tank archetype",
+  "description": "Click for more Info.   A swift and mobile fighter who charges around the battlefield.",
+  "author": "Ascension",
+  "icon": "Ability_Warrior_IntensifyRage",
+  "roles": 2,
+  "primaryStat": 0,
+  "entries": [
+   {
+    "id": 1783,
+    "rank": 1
+   },
+   {
+    "id": 2870,
+    "rank": 1
+   },
+   {
+    "id": 2996,
+    "rank": 1
+   },
+   {
+    "id": 3167,
+    "rank": 1
+   }
+  ]
+ },
+ "a252ae0e-94a2-40dd-bd5b-35db13933f44": {
+  "name": "Templar of Flame",
+  "subtext": "Tank archetype",
+  "description": "Click for more Info.   Purge enemies and defend allies with blazing flames.",
+  "author": "Ascension",
+  "icon": "spell_mage_flameorb",
+  "roles": 2,
+  "primaryStat": 3,
+  "entries": [
+   {
+    "id": 1300,
+    "rank": 1
+   },
+   {
+    "id": 1592,
+    "rank": 1
+   },
+   {
+    "id": 1302,
+    "rank": 1
+   },
+   {
+    "id": 2802,
+    "rank": 1
+   }
+  ]
+ },
+ "d52bf48a-b38a-41fe-b582-b958ed1b82b9": {
+  "name": "Demoniac",
+  "subtext": "Tank archetype",
+  "description": "Click for more Info.   Transform into a shadow demon with impressive flames and shadow claws.",
+  "author": "Ascension",
+  "icon": "ability_demonhunter_spectank",
+  "roles": 2,
+  "primaryStat": 3,
+  "entries": [
+   {
+    "id": 2195,
+    "rank": 1
+   },
+   {
+    "id": 1205,
+    "rank": 1
+   },
+   {
+    "id": 3342,
+    "rank": 1
+   },
+   {
+    "id": 2973,
+    "rank": 1
+   },
+   {
+    "id": 1696,
+    "rank": 1
+   }
+  ]
+ },
+ "d91df67f-a60b-482d-8804-d445ccfe427d": {
+  "name": "Mystic Knight",
+  "subtext": "Tank archetype",
+  "description": "Click for more Info.   Wield shimmering arcane magic to defend yourself and your allies.",
+  "author": "Ascension",
+  "icon": "spell_mage_overpowered",
+  "roles": 2,
+  "primaryStat": 0,
+  "entries": [
+   {
+    "id": 1300,
+    "rank": 1
+   },
+   {
+    "id": 1775,
+    "rank": 1
+   },
+   {
+    "id": 1776,
+    "rank": 1
+   }
+  ]
+ },
+ "20d5063d-66a5-48ab-a57f-f942be41fb02": {
+  "name": "Crimson Champion",
+  "subtext": "Tank archetype",
+  "description": "Click for more Info.   Store holy magic in your shield to unleash powerful effects.",
+  "author": "Ascension",
+  "icon": "spell_holy_blessingofprotection_red",
+  "roles": 2,
+  "primaryStat": 0,
+  "entries": [
+   {
+    "id": 3021,
+    "rank": 1
+   },
+   {
+    "id": 1607,
+    "rank": 1
+   },
+   {
+    "id": 2656,
+    "rank": 1
+   },
+   {
+    "id": 3745,
+    "rank": 1
+   }
+  ]
+ },
+ "22c3cb4c-d314-4208-ac4b-e4d7aaf803cb": {
+  "name": "Stormguard",
+  "subtext": "Tank archetype",
+  "description": "Click for more Info.   Shroud yourself in thunder, shocking foes with electrifying magic.",
+  "author": "Ascension",
+  "icon": "Ability_Shaman_Stormstrike",
+  "roles": 2,
+  "primaryStat": 0,
+  "entries": [
+   {
+    "id": 2870,
+    "rank": 1
+   },
+   {
+    "id": 2683,
+    "rank": 1
+   },
+   {
+    "id": 1655,
+    "rank": 1
+   },
+   {
+    "id": 2685,
+    "rank": 1
+   }
+  ]
+ },
+ "08535f9f-9321-4eef-9bb2-9c4e6911c22a": {
+  "name": "Icebound",
+  "subtext": "Tank archetype",
+  "description": "Click for more Info.   Cloak yourself in ice for nearly impenetrable defense.",
+  "author": "Ascension",
+  "icon": "Spell_Ice_Lament",
+  "roles": 2,
+  "primaryStat": 3,
+  "entries": [
+   {
+    "id": 1300,
+    "rank": 1
+   },
+   {
+    "id": 1302,
+    "rank": 1
+   },
+   {
+    "id": 1777,
+    "rank": 1
+   },
+   {
+    "id": 3074,
+    "rank": 1
+   }
+  ]
+ },
+ "5657ab7b-ca87-428b-9d0f-dc829adf5d85": {
+  "name": "Plague Bearer",
+  "subtext": "Tank archetype",
+  "description": "Click for more Info.   Transform into a monstrous Beast of Rot.",
+  "author": "Ascension",
+  "icon": "ability_druid_markofursolgreen",
+  "roles": 2,
+  "primaryStat": 1,
+  "entries": [
+   {
+    "id": 1466,
+    "rank": 1
+   },
+   {
+    "id": 3568,
+    "rank": 1
+   },
+   {
+    "id": 2963,
+    "rank": 1
+   },
+   {
+    "id": 1635,
+    "rank": 1
+   }
+  ]
+ },
+ "5d47b23f-8d91-4afb-a393-f7401bc46c68": {
+  "name": "Beast of Nightmare",
+  "subtext": "Tank archetype",
+  "description": "Click for more Info.   Wield the power of the Emerald Nightmare.",
+  "author": "Ascension",
+  "icon": "ability_druid_markofursol",
+  "roles": 2,
+  "primaryStat": 1,
+  "entries": [
+   {
+    "id": 36472,
+    "rank": 1
+   },
+   {
+    "id": 2676,
+    "rank": 1
+   },
+   {
+    "id": 1392,
+    "rank": 1
+   },
+   {
+    "id": 2712,
+    "rank": 1
+   }
+  ]
+ },
+ "d62e4ddb-ad34-4c67-8dac-862c15f001c9": {
+  "name": "Thunderpaw",
+  "subtext": "Tank archetype",
+  "description": "Click for more Info.   Defend allies and dominate foes with thunderous fang and claw.",
+  "author": "Ascension",
+  "icon": "ability_druid_markofursolblue",
+  "roles": 2,
+  "primaryStat": 1,
+  "entries": [
+   {
+    "id": 1498,
+    "rank": 1
+   },
+   {
+    "id": 1497,
+    "rank": 1
+   },
+   {
+    "id": 1499,
+    "rank": 1
+   },
+   {
+    "id": 2685,
+    "rank": 1
+   }
+  ]
+ },
+ "393912ff-28db-4e44-86da-d25f83c1fbe4": {
+  "name": "Warden",
+  "subtext": "Damage archetype",
+  "description": "Click for more Info.   Hunt the monsters of Azeroth with elven grace.",
+  "author": "Ascension",
+  "icon": "ability_glaivetoss",
+  "roles": 8,
+  "primaryStat": 1,
+  "entries": [
+   {
+    "id": 2766,
+    "rank": 1
+   },
+   {
+    "id": 2825,
+    "rank": 1
+   },
+   {
+    "id": 1618,
+    "rank": 1
+   },
+   {
+    "id": 1782,
+    "rank": 1
+   }
+  ]
+ },
+ "3db13932-7c25-4109-b885-68530c3b9b2f": {
+  "name": "Druid of the Fang",
+  "subtext": "Damage archetype",
+  "description": "Click for more Info.   Transform into a venomous serpent.",
+  "author": "Ascension",
+  "icon": "spell_nature_poisoncleansingtotem",
+  "roles": 8,
+  "primaryStat": 1,
+  "entries": [
+   {
+    "id": 1478,
+    "rank": 1
+   },
+   {
+    "id": 2818,
+    "rank": 1
+   },
+   {
+    "id": 1866,
+    "rank": 1
+   }
+  ]
+ },
+ "69011001-2adf-43ff-9bf6-c478d7af9f30": {
+  "name": "Heavyweight",
+  "subtext": "Damage archetype",
+  "description": "Click for more Info.   Become an unstoppable force of colossal might.",
+  "author": "Ascension",
+  "icon": "ability_butcher_heavyhanded",
+  "roles": 8,
+  "primaryStat": 0,
+  "entries": [
+   {
+    "id": 2730,
+    "rank": 1
+   },
+   {
+    "id": 2661,
+    "rank": 1
+   },
+   {
+    "id": 2886,
+    "rank": 1
+   },
+   {
+    "id": 3102,
+    "rank": 1
+   }
+  ]
+ },
+ "6ca246c8-4971-40f3-81e4-3befe43103ce": {
+  "name": "Dragon Warrior",
+  "subtext": "Damage archetype",
+  "description": "Click for more Info.   Charge into battle and unleash the fury of dragons.",
+  "author": "Ascension",
+  "icon": "Ability_Warrior_DragonRoar",
+  "roles": 8,
+  "primaryStat": 0,
+  "entries": [
+   {
+    "id": 2764,
+    "rank": 1
+   },
+   {
+    "id": 1586,
+    "rank": 1
+   },
+   {
+    "id": 1587,
+    "rank": 1
+   },
+   {
+    "id": 3102,
+    "rank": 1
+   }
+  ]
+ },
+ "76d99cd9-b8fe-4f71-9905-e1f3a6f42484": {
+  "name": "Son of Gruul",
+  "subtext": "Damage archetype",
+  "description": "Click for more Info.   Dominate foes with raw strength and primal might.",
+  "author": "Ascension",
+  "icon": "_D3rend",
+  "roles": 8,
+  "primaryStat": 0,
+  "entries": [
+   {
+    "id": 2764,
+    "rank": 1
+   },
+   {
+    "id": 1795,
+    "rank": 1
+   }
+  ]
+ },
+ "79c8ee8e-e4a0-45bc-ac6e-c5167961797b": {
+  "name": "Master of Shadows",
+  "subtext": "Damage archetype",
+  "description": "Click for more Info.   A shadowy assassin that strikes down foes with dark daggers.",
+  "author": "Ascension",
+  "icon": "spell_nzinsanity_chasedbyshadows",
+  "roles": 8,
+  "primaryStat": 1,
+  "entries": [
+   {
+    "id": 36796,
+    "rank": 1
+   },
+   {
+    "id": 2778,
+    "rank": 1
+   },
+   {
+    "id": 2801,
+    "rank": 1
+   },
+   {
+    "id": 1636,
+    "rank": 1
+   }
+  ]
+ },
+ "1bc9c682-d6f9-4aeb-975e-46045eb73d22": {
+  "name": "Marksman",
+  "subtext": "Damage archetype",
+  "description": "Click for more Info.   An agile archer with trick shots and combo moves.",
+  "author": "Ascension",
+  "icon": "5_bowshot_Border",
+  "roles": 8,
+  "primaryStat": 1,
+  "entries": [
+   {
+    "id": 36782,
+    "rank": 1
+   },
+   {
+    "id": 3026,
+    "rank": 1
+   },
+   {
+    "id": 2840,
+    "rank": 1
+   },
+   {
+    "id": 2830,
+    "rank": 1
+   },
+   {
+    "id": 1542,
+    "rank": 1
+   }
+  ]
+ },
+ "87a12d24-6e00-4435-9f28-d6991ec0bd99": {
+  "name": "Paratrooper",
+  "subtext": "Damage archetype",
+  "description": "Click for more Info.   A ranged marksman that fires from above their target.",
+  "author": "Ascension",
+  "icon": "ability_hunter_disarmingshot",
+  "roles": 8,
+  "primaryStat": 1,
+  "entries": [
+   {
+    "id": 2830,
+    "rank": 1
+   },
+   {
+    "id": 37450,
+    "rank": 1
+   },
+   {
+    "id": 3360,
+    "rank": 1
+   }
+  ]
+ },
+ "8d479f80-ba6e-4dc9-be01-a453be1925e5": {
+  "name": "Bestial Ranger",
+  "subtext": "Damage archetype",
+  "description": "Click for more Info.   A savage hunter with a powerful animal companion.",
+  "author": "Ascension",
+  "icon": "ability_druid_ferociousbite",
+  "roles": 8,
+  "primaryStat": 1,
+  "entries": [
+   {
+    "id": 3044,
+    "rank": 1
+   },
+   {
+    "id": 1305,
+    "rank": 1
+   },
+   {
+    "id": 2994,
+    "rank": 1
+   },
+   {
+    "id": 1649,
+    "rank": 1
+   }
+  ]
+ },
+ "9c6cbaef-9895-42e3-885d-303a06dec111": {
+  "name": "Defias Gunslinger",
+  "subtext": "Damage archetype",
+  "description": "Click for more Info.   A bandit that mixes close-range shots with swordplay.",
+  "author": "Ascension",
+  "icon": "Ability_Rogue_PistolShot",
+  "roles": 8,
+  "primaryStat": 1,
+  "entries": [
+   {
+    "id": 1836,
+    "rank": 1
+   },
+   {
+    "id": 2825,
+    "rank": 1
+   },
+   {
+    "id": 2766,
+    "rank": 1
+   }
+  ]
+ },
+ "223c330a-dda1-4935-92e5-9ea579c46eb1": {
+  "name": "Evoker",
+  "subtext": "Damage archetype",
+  "description": "Click for more Info.   An elemental wizard that mixes Frost, Fire, and Arcane magics.",
+  "author": "Ascension",
+  "icon": "Ability_Mage_MissileBarrage",
+  "roles": 8,
+  "primaryStat": 3,
+  "entries": [
+   {
+    "id": 2664,
+    "rank": 1
+   },
+   {
+    "id": 2672,
+    "rank": 1
+   },
+   {
+    "id": 2839,
+    "rank": 1
+   },
+   {
+    "id": 957,
+    "rank": 1
+   },
+   {
+    "id": 1099,
+    "rank": 1
+   }
+  ]
+ },
+ "446e3d1c-da7b-44c5-b6a3-75aabce67df7": {
+  "name": "Druid of the Eclipse",
+  "subtext": "Damage archetype",
+  "description": "Click for more Info.   A Moonkin that channels power through their Eclipse phases.",
+  "author": "Ascension",
+  "icon": "Ability_Druid_Eclipse",
+  "roles": 8,
+  "primaryStat": 3,
+  "entries": [
+   {
+    "id": 2841,
+    "rank": 1
+   },
+   {
+    "id": 37416,
+    "rank": 1
+   },
+   {
+    "id": 2822,
+    "rank": 1
+   },
+   {
+    "id": 1019,
+    "rank": 1
+   },
+   {
+    "id": 1614,
+    "rank": 1
+   }
+  ]
+ },
+ "6ceabc35-65b2-4c96-a23b-3559f3707cfb": {
+  "name": "Shadowseer",
+  "subtext": "Damage archetype",
+  "description": "Click for more Info.   A Shadowmage devoted to the Void.",
+  "author": "Ascension",
+  "icon": "Spell_Shadow_NetherCloak",
+  "roles": 8,
+  "primaryStat": 3,
+  "entries": [
+   {
+    "id": 2712,
+    "rank": 1
+   },
+   {
+    "id": 2676,
+    "rank": 1
+   },
+   {
+    "id": 3295,
+    "rank": 1
+   },
+   {
+    "id": 36632,
+    "rank": 1
+   }
+  ]
+ },
+ "90a2d5fc-6bd5-4d67-830d-996cc653b274": {
+  "name": "Cryomancer",
+  "subtext": "Damage archetype",
+  "description": "Click for more Info.   Entomb foes in ice and weave explosive frost bombs.",
+  "author": "Ascension",
+  "icon": "Spell_Mage_FrostBomb",
+  "roles": 8,
+  "primaryStat": 3,
+  "entries": [
+   {
+    "id": 2664,
+    "rank": 1
+   },
+   {
+    "id": 1588,
+    "rank": 1
+   },
+   {
+    "id": 2978,
+    "rank": 1
+   },
+   {
+    "id": 3520,
+    "rank": 1
+   },
+   {
+    "id": 3613,
+    "rank": 1
+   }
+  ]
+ },
+ "bcd1a08d-f311-4977-b899-f5b16df35546": {
+  "name": "Ascendant",
+  "subtext": "Damage archetype",
+  "description": "Click for more Info.   Smite foes with righteous fire.",
+  "author": "Ascension",
+  "icon": "spell_holy_searinglight",
+  "roles": 8,
+  "primaryStat": 3,
+  "entries": [
+   {
+    "id": 2699,
+    "rank": 1
+   },
+   {
+    "id": 2928,
+    "rank": 1
+   },
+   {
+    "id": 2738,
+    "rank": 1
+   },
+   {
+    "id": 3412,
+    "rank": 1
+   }
+  ]
+ },
+ "ea155d28-ee8e-4a6e-89cb-6d0605d89242": {
+  "name": "Stormcaller",
+  "subtext": "Damage archetype",
+  "description": "Click for more Info.   Summon the power of torrential lightning storms.",
+  "author": "Ascension",
+  "icon": "Spell_Shaman_ThunderStorm",
+  "roles": 8,
+  "primaryStat": 3,
+  "entries": [
+   {
+    "id": 2683,
+    "rank": 1
+   },
+   {
+    "id": 2892,
+    "rank": 1
+   },
+   {
+    "id": 2685,
+    "rank": 1
+   },
+   {
+    "id": 3213,
+    "rank": 1
+   }
+  ]
+ },
+ "fb4ebbac-a2c8-4548-a963-59602d89021d": {
+  "name": "Gutripper",
+  "subtext": "Damage archetype",
+  "description": "Click for more Info.   Disembowel foes as a bleed-focused Rogue.",
+  "author": "Ascension",
+  "icon": "ability_demonhunter_bloodlet",
+  "roles": 8,
+  "primaryStat": 1,
+  "entries": [
+   {
+    "id": 1577,
+    "rank": 1
+   },
+   {
+    "id": 3500,
+    "rank": 1
+   },
+   {
+    "id": 2851,
+    "rank": 1
+   }
+  ]
+ },
+ "558dd336-cb28-4bda-b0d0-1e615bb21dbc": {
+  "name": "Hellcat",
+  "subtext": "Damage archetype",
+  "description": "Click for more Info.   Sear foes with flaming teeth and claws.",
+  "author": "Ascension",
+  "icon": "inv_staff_99",
+  "roles": 8,
+  "primaryStat": 1,
+  "entries": [
+   {
+    "id": 2728,
+    "rank": 1
+   },
+   {
+    "id": 1791,
+    "rank": 1
+   },
+   {
+    "id": 1787,
+    "rank": 1
+   },
+   {
+    "id": 2858,
+    "rank": 1
+   }
+  ]
+ },
+ "567c3acc-5acc-4820-bdc7-fdf710e63beb": {
+  "name": "Crusader",
+  "subtext": "Damage archetype",
+  "description": "Click for more Info.   A master of Paladin Seals, unleashing holy attacks.",
+  "author": "Ascension",
+  "icon": "ability_paladin_righteousvengeance",
+  "roles": 8,
+  "primaryStat": 0,
+  "entries": [
+   {
+    "id": 3020,
+    "rank": 1
+   },
+   {
+    "id": 3594,
+    "rank": 1
+   },
+   {
+    "id": 3735,
+    "rank": 1
+   },
+   {
+    "id": 3410,
+    "rank": 1
+   },
+   {
+    "id": 1608,
+    "rank": 1
+   }
+  ]
+ },
+ "5fd35166-8149-49f6-a5ab-462f31ccecb4": {
+  "name": "White Walker",
+  "subtext": "Damage archetype",
+  "description": "Click for more Info.   Chill foes to the bone and shatter them with a colossal weapon.",
+  "author": "Ascension",
+  "icon": "spell_mage_iceflows",
+  "roles": 8,
+  "primaryStat": 3,
+  "entries": [
+   {
+    "id": 2778,
+    "rank": 1
+   },
+   {
+    "id": 1658,
+    "rank": 1
+   },
+   {
+    "id": 1681,
+    "rank": 1
+   },
+   {
+    "id": 3613,
+    "rank": 1
+   }
+  ]
+ },
+ "4b175aaf-fc60-40ed-b52c-83596ee7caf5": {
+  "name": "Firelord",
+  "subtext": "Damage archetype",
+  "description": "Click for more Info.   Boil the earth with lava, infuse your weapon with fire magic.",
+  "author": "Ascension",
+  "icon": "Ability_Shaman_Lavalash",
+  "roles": 8,
+  "primaryStat": 1,
+  "entries": [
+   {
+    "id": 1535,
+    "rank": 1
+   },
+   {
+    "id": 2803,
+    "rank": 1
+   },
+   {
+    "id": 2890,
+    "rank": 1
+   },
+   {
+    "id": 1639,
+    "rank": 1
+   },
+   {
+    "id": 3054,
+    "rank": 1
+   }
+  ]
+ },
+ "5ff2ea6e-2b63-4a0e-b16a-db9565f53cf6": {
+  "name": "Divine Sentinel",
+  "subtext": "Damage archetype",
+  "description": "Click for more Info.   Surrender your physical form and become an emissary of the Light.",
+  "author": "Ascension",
+  "icon": "Ability_Paladin_BeaconsOfLight",
+  "roles": 8,
+  "primaryStat": 0,
+  "entries": [
+   {
+    "id": 3594,
+    "rank": 1
+   },
+   {
+    "id": 3735,
+    "rank": 1
+   },
+   {
+    "id": 2928,
+    "rank": 1
+   }
+  ]
+ },
+ "9fcd478d-4b9b-496f-92c7-d2a998cc4a21": {
+  "name": "Locust Ranger",
+  "subtext": "Damage archetype",
+  "description": "Click for more Info.   A nature-infused archer with poisoned shots and stings.",
+  "author": "Ascension",
+  "icon": "ability_hunter_cobrashot",
+  "roles": 8,
+  "primaryStat": 1,
+  "entries": [
+   {
+    "id": 1580,
+    "rank": 1
+   },
+   {
+    "id": 2793,
+    "rank": 1
+   },
+   {
+    "id": 2841,
+    "rank": 1
+   },
+   {
+    "id": 3721,
+    "rank": 1
+   }
+  ]
+ },
+ "d836c2b6-c794-4460-8413-46c4d459d1b6": {
+  "name": "Dark Ranger",
+  "subtext": "Damage archetype",
+  "description": "Click for more Info.   A shadow-bound Hunter that weaves sinister magic into their shots to drain targets of life.",
+  "author": "Ascension",
+  "icon": "custom_T_Nhance_RPG_Icons_ShadowArrow_Border",
+  "roles": 8,
+  "primaryStat": 1,
+  "entries": [
+   {
+    "id": 1862,
+    "rank": 1
+   },
+   {
+    "id": 1861,
+    "rank": 1
+   },
+   {
+    "id": 2712,
+    "rank": 1
+   },
+   {
+    "id": 1869,
+    "rank": 1
+   }
+  ]
+ },
+ "dc6ba192-b5fe-48dc-a1ed-7bb9f3aba8bb": {
+  "name": "Wind Rager",
+  "subtext": "Damage archetype",
+  "description": "Click for more Info.   A tempest of steel, a hurricane of fury.",
+  "author": "Ascension",
+  "icon": "spell_Shaman_Unleashweapon_Wind",
+  "roles": 8,
+  "primaryStat": 0,
+  "entries": [
+   {
+    "id": 1683,
+    "rank": 1
+   },
+   {
+    "id": 2772,
+    "rank": 1
+   },
+   {
+    "id": 2907,
+    "rank": 1
+   },
+   {
+    "id": 1785,
+    "rank": 1
+   }
+  ]
+ },
+ "eb1d6d38-3928-4822-902c-0e62e28665b9": {
+  "name": "Storm Giant",
+  "subtext": "Damage archetype",
+  "description": "Click for more Info.   Strike enemies with thunder and lightning channeled through your blade.",
+  "author": "Ascension",
+  "icon": "Ability_ThunderKing_Overcharge",
+  "roles": 8,
+  "primaryStat": 0,
+  "entries": [
+   {
+    "id": 2870,
+    "rank": 1
+   },
+   {
+    "id": 2683,
+    "rank": 1
+   },
+   {
+    "id": 1678,
+    "rank": 1
+   },
+   {
+    "id": 1680,
+    "rank": 1
+   },
+   {
+    "id": 2685,
+    "rank": 1
+   }
+  ]
+ },
+ "0ee35b68-fa06-4e7a-83cd-51a65fd8cf3b": {
+  "name": "Carnage Incarnate",
+  "subtext": "Tank archetype",
+  "description": "Click for more Info.   A savage beast of raw destruction.",
+  "author": "Ascension",
+  "icon": "ability_druid_denmother",
+  "roles": 2,
+  "primaryStat": 1,
+  "entries": [
+   {
+    "id": 1816,
+    "rank": 1
+   },
+   {
+    "id": 2882,
+    "rank": 1
+   },
+   {
+    "id": 2990,
+    "rank": 1
+   }
+  ]
+ },
+ "39c35111-46ed-4265-94ad-8189326d99a7": {
+  "name": "Fel Apostate",
+  "subtext": "Damage archetype",
+  "description": "Click for more Info.   Summon the magic of Fire and Chaos to destroy your enemies.",
+  "author": "Ascension",
+  "icon": "INV__FelBarrage",
+  "roles": 8,
+  "primaryStat": 3,
+  "entries": [
+   {
+    "id": 2861,
+    "rank": 1
+   },
+   {
+    "id": 2973,
+    "rank": 1
+   },
+   {
+    "id": 1567,
+    "rank": 1
+   },
+   {
+    "id": 2872,
+    "rank": 1
+   },
+   {
+    "id": 3642,
+    "rank": 1
+   }
+  ]
+ }
+}

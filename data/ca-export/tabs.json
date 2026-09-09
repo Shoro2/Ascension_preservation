@@ -1,0 +1,472 @@
+[
+ {
+  "ID": 1,
+  "Name": "None",
+  "Display": "None"
+ },
+ {
+  "ID": 2,
+  "Name": "Survival",
+  "Display": "Survival"
+ },
+ {
+  "ID": 3,
+  "Name": "Marksmanship",
+  "Display": "Marksmanship"
+ },
+ {
+  "ID": 4,
+  "Name": "BeastMastery",
+  "Display": "BeastMastery"
+ },
+ {
+  "ID": 5,
+  "Name": "Fury",
+  "Display": "Fury"
+ },
+ {
+  "ID": 6,
+  "Name": "Arms",
+  "Display": "Arms"
+ },
+ {
+  "ID": 7,
+  "Name": "Protection",
+  "Display": "Protection"
+ },
+ {
+  "ID": 8,
+  "Name": "Combat",
+  "Display": "Combat"
+ },
+ {
+  "ID": 9,
+  "Name": "Subtlety",
+  "Display": "Subtlety"
+ },
+ {
+  "ID": 10,
+  "Name": "Assassination",
+  "Display": "Assassination"
+ },
+ {
+  "ID": 11,
+  "Name": "Arcane",
+  "Display": "Arcane"
+ },
+ {
+  "ID": 12,
+  "Name": "Frost",
+  "Display": "Frost"
+ },
+ {
+  "ID": 13,
+  "Name": "Fire",
+  "Display": "Fire"
+ },
+ {
+  "ID": 14,
+  "Name": "Holy",
+  "Display": "Holy"
+ },
+ {
+  "ID": 15,
+  "Name": "Shadow",
+  "Display": "Shadow"
+ },
+ {
+  "ID": 16,
+  "Name": "Discipline",
+  "Display": "Discipline"
+ },
+ {
+  "ID": 17,
+  "Name": "Affliction",
+  "Display": "Affliction"
+ },
+ {
+  "ID": 18,
+  "Name": "Demonology",
+  "Display": "Demonology"
+ },
+ {
+  "ID": 19,
+  "Name": "Destruction",
+  "Display": "Destruction"
+ },
+ {
+  "ID": 20,
+  "Name": "Restoration",
+  "Display": "Restoration"
+ },
+ {
+  "ID": 21,
+  "Name": "Feral",
+  "Display": "Feral"
+ },
+ {
+  "ID": 22,
+  "Name": "Balance",
+  "Display": "Balance"
+ },
+ {
+  "ID": 23,
+  "Name": "Elemental",
+  "Display": "Elemental"
+ },
+ {
+  "ID": 24,
+  "Name": "Enhancement",
+  "Display": "Enhancement"
+ },
+ {
+  "ID": 25,
+  "Name": "Retribution",
+  "Display": "Retribution"
+ },
+ {
+  "ID": 26,
+  "Name": "Blood",
+  "Display": "Blood"
+ },
+ {
+  "ID": 27,
+  "Name": "Unholy",
+  "Display": "Unholy"
+ },
+ {
+  "ID": 28,
+  "Name": "General1",
+  "Display": "General (1)"
+ },
+ {
+  "ID": 29,
+  "Name": "General2",
+  "Display": "General (2)"
+ },
+ {
+  "ID": 30,
+  "Name": "General3",
+  "Display": "General (3)"
+ },
+ {
+  "ID": 31,
+  "Name": "Brutality",
+  "Display": "Brutality"
+ },
+ {
+  "ID": 32,
+  "Name": "Tactics",
+  "Display": "Tactics"
+ },
+ {
+  "ID": 33,
+  "Name": "Ancestry",
+  "Display": "Ancestry"
+ },
+ {
+  "ID": 34,
+  "Name": "Voodoo",
+  "Display": "Voodoo"
+ },
+ {
+  "ID": 35,
+  "Name": "Brewing",
+  "Display": "Brewing"
+ },
+ {
+  "ID": 36,
+  "Name": "Shadowhunting",
+  "Display": "Shadowhunting"
+ },
+ {
+  "ID": 37,
+  "Name": "Slaying",
+  "Display": "Slaying"
+ },
+ {
+  "ID": 38,
+  "Name": "Felblood",
+  "Display": "Felblood"
+ },
+ {
+  "ID": 39,
+  "Name": "Boltslinger",
+  "Display": "Boltslinger"
+ },
+ {
+  "ID": 40,
+  "Name": "Darkness",
+  "Display": "Darkness"
+ },
+ {
+  "ID": 41,
+  "Name": "Inquisition",
+  "Display": "Inquisition"
+ },
+ {
+  "ID": 42,
+  "Name": "Lightning",
+  "Display": "Lightning"
+ },
+ {
+  "ID": 43,
+  "Name": "Wind",
+  "Display": "Wind"
+ },
+ {
+  "ID": 44,
+  "Name": "Gifts",
+  "Display": "Gifts"
+ },
+ {
+  "ID": 45,
+  "Name": "War",
+  "Display": "War"
+ },
+ {
+  "ID": 46,
+  "Name": "Hellfire",
+  "Display": "Hellfire"
+ },
+ {
+  "ID": 47,
+  "Name": "Defiance",
+  "Display": "Defiance"
+ },
+ {
+  "ID": 48,
+  "Name": "Inspiration",
+  "Display": "Inspiration"
+ },
+ {
+  "ID": 49,
+  "Name": "Gladiator",
+  "Display": "Gladiator"
+ },
+ {
+  "ID": 50,
+  "Name": "Fighting",
+  "Display": "Fighting"
+ },
+ {
+  "ID": 51,
+  "Name": "Runes",
+  "Display": "Runes"
+ },
+ {
+  "ID": 52,
+  "Name": "Ferocity",
+  "Display": "Ferocity"
+ },
+ {
+  "ID": 53,
+  "Name": "Packleader",
+  "Display": "Packleader"
+ },
+ {
+  "ID": 54,
+  "Name": "Archery",
+  "Display": "Archery"
+ },
+ {
+  "ID": 55,
+  "Name": "Dueling",
+  "Display": "Dueling"
+ },
+ {
+  "ID": 56,
+  "Name": "Duality",
+  "Display": "Duality"
+ },
+ {
+  "ID": 57,
+  "Name": "Time",
+  "Display": "Time"
+ },
+ {
+  "ID": 58,
+  "Name": "Displacement",
+  "Display": "Displacement"
+ },
+ {
+  "ID": 59,
+  "Name": "Death",
+  "Display": "Death"
+ },
+ {
+  "ID": 60,
+  "Name": "Rime",
+  "Display": "Rime"
+ },
+ {
+  "ID": 61,
+  "Name": "Animation",
+  "Display": "Animation"
+ },
+ {
+  "ID": 62,
+  "Name": "Incineration",
+  "Display": "Incineration"
+ },
+ {
+  "ID": 63,
+  "Name": "Draconic",
+  "Display": "Draconic"
+ },
+ {
+  "ID": 64,
+  "Name": "Godblade",
+  "Display": "Godblade"
+ },
+ {
+  "ID": 65,
+  "Name": "Corruption",
+  "Display": "Corruption"
+ },
+ {
+  "ID": 66,
+  "Name": "Influence",
+  "Display": "Influence"
+ },
+ {
+  "ID": 67,
+  "Name": "AstralWarfare",
+  "Display": "Astral Warfare"
+ },
+ {
+  "ID": 68,
+  "Name": "Tides",
+  "Display": "Tides"
+ },
+ {
+  "ID": 69,
+  "Name": "Moonbow",
+  "Display": "Moonbow"
+ },
+ {
+  "ID": 70,
+  "Name": "Piety",
+  "Display": "Piety"
+ },
+ {
+  "ID": 71,
+  "Name": "Blessings",
+  "Display": "Blessings"
+ },
+ {
+  "ID": 72,
+  "Name": "Seraphim",
+  "Display": "Seraphim"
+ },
+ {
+  "ID": 73,
+  "Name": "Firearms",
+  "Display": "Firearms"
+ },
+ {
+  "ID": 74,
+  "Name": "Invention",
+  "Display": "Invention"
+ },
+ {
+  "ID": 75,
+  "Name": "Mechanics",
+  "Display": "Mechanics"
+ },
+ {
+  "ID": 76,
+  "Name": "Venom",
+  "Display": "Venom"
+ },
+ {
+  "ID": 77,
+  "Name": "Stalking",
+  "Display": "Stalking"
+ },
+ {
+  "ID": 78,
+  "Name": "Fortitude",
+  "Display": "Fortitude"
+ },
+ {
+  "ID": 79,
+  "Name": "Reaping",
+  "Display": "Reaping"
+ },
+ {
+  "ID": 80,
+  "Name": "Soul",
+  "Display": "Soul"
+ },
+ {
+  "ID": 81,
+  "Name": "Domination",
+  "Display": "Domination"
+ },
+ {
+  "ID": 82,
+  "Name": "Primal",
+  "Display": "Primal"
+ },
+ {
+  "ID": 83,
+  "Name": "Geomancy",
+  "Display": "Geomancy"
+ },
+ {
+  "ID": 84,
+  "Name": "Life",
+  "Display": "Life"
+ },
+ {
+  "ID": 85,
+  "Name": "Runic",
+  "Display": "Runic"
+ },
+ {
+  "ID": 86,
+  "Name": "Riftblade",
+  "Display": "Riftblade"
+ },
+ {
+  "ID": 87,
+  "Name": "Class",
+  "Display": "Class"
+ },
+ {
+  "ID": 88,
+  "Name": "Bulwark",
+  "Display": "Bulwark"
+ },
+ {
+  "ID": 89,
+  "Name": "Hydromancy",
+  "Display": "Hydromancy"
+ },
+ {
+  "ID": 90,
+  "Name": "Valkyr",
+  "Display": "Valkyr"
+ },
+ {
+  "ID": 91,
+  "Name": "MountainKing",
+  "Display": "Mountain King"
+ },
+ {
+  "ID": 92,
+  "Name": "Vizier",
+  "Display": "Vizier"
+ },
+ {
+  "ID": 93,
+  "Name": "Fleshweaver",
+  "Display": "Fleshweaver"
+ },
+ {
+  "ID": 94,
+  "Name": "WitchKnight",
+  "Display": "Witch Knight"
+ }
+]

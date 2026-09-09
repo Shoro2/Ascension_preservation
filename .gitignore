@@ -1,0 +1,55 @@
+# --- secrets / credentials (never commit) ---
+credentials.txt
+*credentials*
+ascreds.local*
+*.pem
+*.key
+
+# --- raw live-login captures & handshake material (contain real creds) ---
+# NOTE: reference/world-opcode-samples/ intentionally ships credential-free
+# world_unhandled_*.bin post-auth samples; only the login-handshake captures
+# (e0-captures, wire-analysis hellos) are excluded below.
+e0-captures/
+wire-analysis/
+live-*.bin
+*-challenge-response.bin
+*-proof-response.bin
+ascension-challenge.bin
+ascension-const-blob.bin
+
+# --- logs ---
+*.log
+logs-bridge/
+bridge_log.txt
+shim_log.txt
+shim-out.log
+world-out.log
+
+# --- proprietary client data (bring your own; see data/MANIFEST.md) ---
+mpqB/
+mpqC/
+mpqchain/
+client-ascension/
+server-ascension/
+*.MPQ
+*.mpq
+*.dbc
+*.DBC
+
+# --- python ---
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# --- editor / OS ---
+.DS_Store
+Thumbs.db
+*.bak
+*.bak-*
+*.pre-*
+*.crashtest-*
+
+# --- large/raw screenshot dumps (keep only reference/screenshots/) ---
+shots/
+rexxar-reference/live-00*.png

@@ -1,0 +1,410 @@
+[
+ {
+  "ID": 1,
+  "SortA": 99,
+  "SortB": 0,
+  "Icon": "Spell_Frost_FrostBolt02",
+  "Name": "Core Damage",
+  "Description": "Core base attacks. All of these abilities are spammable without a cooldown."
+ },
+ {
+  "ID": 2,
+  "SortA": 99,
+  "SortB": 3,
+  "Icon": "Ability_Rogue_Eviscerate",
+  "Name": "Power Ability",
+  "Description": "Combo finishers, pets, heals, and other powerful abilities to go with your core damage ability."
+ },
+ {
+  "ID": 3,
+  "SortA": 99,
+  "SortB": 6,
+  "Icon": "Ability_Rogue_Sprint",
+  "Name": "Mobility",
+  "Description": "Teleports, Jumps, Blinks, Charges, and Sprints. Mobility abilities help you move through the world better."
+ },
+ {
+  "ID": 4,
+  "SortA": 99,
+  "SortB": 9,
+  "Icon": "Spell_Holy_WordFortitude",
+  "Name": "Buffs",
+  "Description": "Buffs are positive passive effects for you and your allies."
+ },
+ {
+  "ID": 5,
+  "SortA": 99,
+  "SortB": 9,
+  "Icon": "Spell_Shadow_CurseOfTounges",
+  "Name": "Debuffs",
+  "Description": "Debuffs are curses, charms, roars, magical effects and more that can be put on enemies. These can make them weaker, slower, or hurt them over time. There are different types of debuffs like poison, disease, curse, and magic, each needing specific ways to remove them."
+ },
+ {
+  "ID": 6,
+  "SortA": 101,
+  "SortB": 10,
+  "Icon": "inv_misc_questionmark",
+  "Name": "Everything Else",
+  "Description": "This is temporary and just to work on spelltagging"
+ },
+ {
+  "ID": 7,
+  "SortA": 99,
+  "SortB": 11,
+  "Icon": "Spell_Holy_SealOfMight",
+  "Name": "Crowd Control",
+  "Description": "Crowd control is tactical skills designed to manipulate and temporarily impair enemies by stunning them, immobilizing them in place, silencing their spellcasting, or even transforming them into harmless creatures."
+ },
+ {
+  "ID": 8,
+  "SortA": 99,
+  "SortB": 12,
+  "Icon": "Spell_Frost_IceStorm",
+  "Name": "Area of Effect",
+  "Description": "\r\nArea of Effect (AoE) abilities impact multiple targets within a specific area. These abilities can deal damage, heal, or apply effects to all targets within a radius, making them essential for managing groups of enemies or supporting allies. AoE spells can be ground-targeted, centered on the caster, or focused on a location. "
+ },
+ {
+  "ID": 9,
+  "SortA": 99,
+  "SortB": 13,
+  "Icon": "Spell_Nature_Sleep",
+  "Name": "Utility",
+  "Description": "Utility abilities provide unique perks outside of direct combat, enhancing a your versatility and adaptability. "
+ },
+ {
+  "ID": 10,
+  "SortA": 99,
+  "SortB": 14,
+  "Icon": "Spell_Holy_CircleOfRenewal",
+  "Name": "Core Healing",
+  "Description": "Healing spells are core abilities that restore health to allies. They are essential for keeping a group alive in combat. These spells counter damage, sustain allies, and ensure survivability during battles."
+ },
+ {
+  "ID": 11,
+  "SortA": 99,
+  "SortB": 15,
+  "Icon": "Spell_Holy_DispelMagic",
+  "Name": "Dispels",
+  "Description": "\r\nDispels remove harmful or beneficial effects from a target. They cleanse debuffs like poisons, diseases, curses, and magic effects from allies or remove buffs from enemies. Dispels counter crowd control, negate damaging debuffs, and weaken opponents."
+ },
+ {
+  "ID": 12,
+  "SortA": 99,
+  "SortB": 16,
+  "Icon": "Spell_Shadow_DeathPact",
+  "Name": "Offensive Cooldowns",
+  "Description": "Powerful Offensive spells that can be used strategically in combat."
+ },
+ {
+  "ID": 13,
+  "SortA": 99,
+  "SortB": 17,
+  "Icon": "spell_nature_tranquility",
+  "Name": "Healing Cooldowns",
+  "Description": "Powerful Healing spells that can be used sparingly and strategically in combat."
+ },
+ {
+  "ID": 14,
+  "SortA": 99,
+  "SortB": 18,
+  "Icon": "Ability_Warrior_DefensiveStance",
+  "Name": "Defensive Cooldowns",
+  "Description": "Powerful Defensive spells that can be used sparingly and strategically in combat."
+ },
+ {
+  "ID": 15,
+  "SortA": 99,
+  "SortB": 19,
+  "Icon": "spell_shaman_stormtotem",
+  "Name": "Support Cooldown",
+  "Description": "Powerful Support spells that can be used sparingly and strategically in combat."
+ },
+ {
+  "ID": 16,
+  "SortA": 99,
+  "SortB": 20,
+  "Icon": "Spell_Holy_Resurrection",
+  "Name": "Resurrections",
+  "Description": "Resurrects allow you to revive allies or even yourself. There are two types of Resurrections. Out-of-Combat Resurrections and Combat Resurrections."
+ },
+ {
+  "ID": 17,
+  "SortA": 99,
+  "SortB": 21,
+  "Icon": "ability_hunter_aspectmastery",
+  "Name": "Passives",
+  "Description": "Passive abilities are always active and are constantly making your Hero stronger."
+ },
+ {
+  "ID": 18,
+  "SortA": 99,
+  "SortB": 22,
+  "Icon": "Spell_Magic_ManaGain",
+  "Name": "Resource Replenishment",
+  "Description": "These abilities help you regain your Mana, Energy, or Rage."
+ },
+ {
+  "ID": 19,
+  "SortA": 99,
+  "SortB": 23,
+  "Icon": "Spell_Shadow_AbominationExplosion",
+  "Name": "Damage Over Time (DoT)",
+  "Description": "Damage Over Time (DoT) abilities deal damage to a target gradually over a set period rather than delivering a single burst of damage. These abilities continuously apply their effects, ticking at regular intervals, and can be useful for sustaining damage on enemies while the caster focuses on other actions."
+ },
+ {
+  "ID": 20,
+  "SortA": 99,
+  "SortB": 24,
+  "Icon": "Ability_Druid_CatForm",
+  "Name": "Shapeshifts, Stances, and Transformations",
+  "Description": "Adopt a specialized Stance, Transformation, or Shapeshift effect that grants access to specific powerful abilities while limiting others. Only one Form can be activated at a time."
+ },
+ {
+  "ID": 21,
+  "SortA": 99,
+  "SortB": 25,
+  "Icon": "Ability_Rogue_SliceDice",
+  "Name": "Combo Point Spenders",
+  "Description": ""
+ },
+ {
+  "ID": 22,
+  "SortA": 99,
+  "SortB": 26,
+  "Icon": "Spell_Arcane_MindMastery",
+  "Name": "Mastery",
+  "Description": "Masteries allow you to learn entire categories of spells without using any more gem slots and using less Ability Essence. For Example, with Seal Mastery you can learn every Seal for less Ability Essence and Gems."
+ },
+ {
+  "ID": 23,
+  "SortA": 99,
+  "SortB": 27,
+  "Icon": "Ability_Hunter_BeastTaming",
+  "Name": "Pets",
+  "Description": ""
+ },
+ {
+  "ID": 24,
+  "SortA": 99,
+  "SortB": 28,
+  "Icon": "Ability_Rogue_FeignDeath",
+  "Name": "Threat",
+  "Description": ""
+ },
+ {
+  "ID": 25,
+  "SortA": 99,
+  "SortB": 29,
+  "Icon": "Spell_Fire_FlameTounge",
+  "Name": "Weapon Enhancements",
+  "Description": ""
+ },
+ {
+  "ID": 27,
+  "SortA": 99,
+  "SortB": 29,
+  "Icon": "inv_misc_questionmark",
+  "Name": "Temp Category",
+  "Description": ""
+ },
+ {
+  "ID": 28,
+  "SortA": 99,
+  "SortB": 29,
+  "Icon": "Spell_Holy_WordFortitude",
+  "Name": "Group Buffs",
+  "Description": ""
+ },
+ {
+  "ID": 29,
+  "SortA": 99,
+  "SortB": 29,
+  "Icon": "Ability_Rogue_BladeTwisting",
+  "Name": "Damage",
+  "Description": ""
+ },
+ {
+  "ID": 30,
+  "SortA": 99,
+  "SortB": 29,
+  "Icon": "Spell_Holy_Renew",
+  "Name": "Healing",
+  "Description": "Healing spells are core abilities that restore health to allies. They are essential for keeping a group alive in combat. These spells counter damage, sustain allies, and ensure survivability during battles."
+ },
+ {
+  "ID": 31,
+  "SortA": 79,
+  "SortB": 0,
+  "Icon": "trade_archaeology_draenei_tome",
+  "Name": "Recently Unlocked and Soon to be Unlocked",
+  "Description": "Core base attacks. All of these abilities are spammable without a cooldown."
+ },
+ {
+  "ID": 32,
+  "SortA": 77,
+  "SortB": 0,
+  "Icon": "Icons\\Interface\\Icons\\trade_archaeology_draenei_tome.blp",
+  "Name": "Recently Unlocked (Warrior)",
+  "Description": ""
+ },
+ {
+  "ID": 33,
+  "SortA": 75,
+  "SortB": 0,
+  "Icon": "Icons\\Interface\\Icons\\trade_archaeology_draenei_tome.blp",
+  "Name": "Recently Unlocked (Rogue)",
+  "Description": ""
+ },
+ {
+  "ID": 34,
+  "SortA": 73,
+  "SortB": 0,
+  "Icon": "Icons\\Interface\\Icons\\trade_archaeology_draenei_tome.blp",
+  "Name": "Recently Unlocked (Hunter)",
+  "Description": ""
+ },
+ {
+  "ID": 35,
+  "SortA": 71,
+  "SortB": 0,
+  "Icon": "Icons\\Interface\\Icons\\trade_archaeology_draenei_tome.blp",
+  "Name": "Recently Unlocked (Druid)",
+  "Description": ""
+ },
+ {
+  "ID": 36,
+  "SortA": 69,
+  "SortB": 0,
+  "Icon": "Icons\\Interface\\Icons\\trade_archaeology_draenei_tome.blp",
+  "Name": "Recently Unlocked (Shaman)",
+  "Description": ""
+ },
+ {
+  "ID": 37,
+  "SortA": 67,
+  "SortB": 0,
+  "Icon": "Icons\\Interface\\Icons\\trade_archaeology_draenei_tome.blp",
+  "Name": "Recently Unlocked (Paladin)",
+  "Description": ""
+ },
+ {
+  "ID": 38,
+  "SortA": 65,
+  "SortB": 0,
+  "Icon": "Icons\\Interface\\Icons\\trade_archaeology_draenei_tome.blp",
+  "Name": "Recently Unlocked (Priest)",
+  "Description": ""
+ },
+ {
+  "ID": 39,
+  "SortA": 63,
+  "SortB": 0,
+  "Icon": "Icons\\Interface\\Icons\\trade_archaeology_draenei_tome.blp",
+  "Name": "Recently Unlocked (Warlock)",
+  "Description": ""
+ },
+ {
+  "ID": 40,
+  "SortA": 61,
+  "SortB": 0,
+  "Icon": "Icons\\Interface\\Icons\\trade_archaeology_draenei_tome.blp",
+  "Name": "Recently Unlocked (Death Knight)",
+  "Description": ""
+ },
+ {
+  "ID": 41,
+  "SortA": 59,
+  "SortB": 0,
+  "Icon": "Icons\\Interface\\Icons\\trade_archaeology_draenei_tome.blp",
+  "Name": "Recently Unlocked (Mage)",
+  "Description": ""
+ },
+ {
+  "ID": 42,
+  "SortA": 80,
+  "SortB": 0,
+  "Icon": "trade_archaeology_draenei_tome",
+  "Name": "Soon to Unlock",
+  "Description": "Core base attacks. All of these abilities are spammable without a cooldown."
+ },
+ {
+  "ID": 43,
+  "SortA": 78,
+  "SortB": 0,
+  "Icon": "Icons\\Interface\\Icons\\trade_archaeology_draenei_tome.blp",
+  "Name": "Soon to Unlock (Warrior)",
+  "Description": ""
+ },
+ {
+  "ID": 44,
+  "SortA": 76,
+  "SortB": 0,
+  "Icon": "Icons\\Interface\\Icons\\trade_archaeology_draenei_tome.blp",
+  "Name": "Soon to Unlock (Rogue)",
+  "Description": ""
+ },
+ {
+  "ID": 45,
+  "SortA": 74,
+  "SortB": 0,
+  "Icon": "Icons\\Interface\\Icons\\trade_archaeology_draenei_tome.blp",
+  "Name": "Soon to Unlock (Hunter)",
+  "Description": ""
+ },
+ {
+  "ID": 46,
+  "SortA": 72,
+  "SortB": 0,
+  "Icon": "Icons\\Interface\\Icons\\trade_archaeology_draenei_tome.blp",
+  "Name": "Soon to Unlock (Druid)",
+  "Description": ""
+ },
+ {
+  "ID": 47,
+  "SortA": 70,
+  "SortB": 0,
+  "Icon": "Icons\\Interface\\Icons\\trade_archaeology_draenei_tome.blp",
+  "Name": "Soon to Unlock (Shaman)",
+  "Description": ""
+ },
+ {
+  "ID": 48,
+  "SortA": 68,
+  "SortB": 0,
+  "Icon": "Icons\\Interface\\Icons\\trade_archaeology_draenei_tome.blp",
+  "Name": "Soon to Unlock (Paladin)",
+  "Description": ""
+ },
+ {
+  "ID": 49,
+  "SortA": 66,
+  "SortB": 0,
+  "Icon": "Icons\\Interface\\Icons\\trade_archaeology_draenei_tome.blp",
+  "Name": "Soon to Unlock (Priest)",
+  "Description": ""
+ },
+ {
+  "ID": 50,
+  "SortA": 64,
+  "SortB": 0,
+  "Icon": "Icons\\Interface\\Icons\\trade_archaeology_draenei_tome.blp",
+  "Name": "Soon to Unlock (Warlock)",
+  "Description": ""
+ },
+ {
+  "ID": 51,
+  "SortA": 62,
+  "SortB": 0,
+  "Icon": "Icons\\Interface\\Icons\\trade_archaeology_draenei_tome.blp",
+  "Name": "Soon to Unlock (Death Knight)",
+  "Description": ""
+ },
+ {
+  "ID": 52,
+  "SortA": 60,
+  "SortB": 0,
+  "Icon": "Icons\\Interface\\Icons\\trade_archaeology_draenei_tome.blp",
+  "Name": "Soon to Unlock (Mage)",
+  "Description": ""
+ }
+]
