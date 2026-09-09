@@ -187,3 +187,40 @@ this applies and you get a real error instead:
 ```sql
 SELECT @@SESSION.sql_mode;
 ```
+
+---
+
+## 5. Ascension's DBC string blocks have no leading NUL
+
+**Symptom.** A DBC reader that works perfectly on stock 3.3.5a returns an empty
+string for one row per file, and a string missing its first character for
+others. Nothing errors. In an audit tool this shows up as spurious "renamed" or
+"renumbered" verdicts.
+
+**Cause.** A WDBC string block conventionally opens with a NUL, so offset 0 is
+the empty string and the first real string starts at offset 1. Ascension's
+files do not. The NUL is **relocated, not removed** — the block is the same
+length and every later offset is unchanged:
+
+```
+stock      AreaTable.dbc   \x00Dun Morogh\x00Long...
+ascension  AreaTable.dbc   Dun Morogh\x00\x00Long...
+                           ^ first real string at offset 0
+```
+
+`"Long"` sits at offset 12 in **both** files. Only the first string moves.
+
+So a reader with the usual `if offset == 0: return ""` guard silently drops the
+first string in every Ascension DBC, and a row still pointing at offset 1
+decodes one character short — `Dun Morogh` reads back as `un Morogh`.
+
+Confirmed across the set; `Achievement.dbc` opens `Son of a...`, `Spell.dbc`
+opens `UPDATE YOUR CLIE…`, both at offset 0 where stock has its NUL.
+
+**Fix.** Do not special-case offset 0. Read from the offset to the next NUL and
+let offset 0 return a real string. Treat "empty" as a genuine value only when
+the byte at that offset actually is NUL.
+
+**Not affected:** anything reading numeric fields. The ID check in issue 3 above
+reads field 0 as a `uint32` and never touches the string block, so its results
+stand regardless.
