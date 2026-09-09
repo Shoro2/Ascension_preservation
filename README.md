@@ -117,13 +117,19 @@ The importer is built to be hard to misuse.
   the import would do before you take anyone offline.
 - **It will not guess between realms.** See above.
 - **Every planned value is measured against the column it is bound for.** Forks
-  outgrow their own schema: Ascension merges achievement ids past 65535 into
-  `Achievement.dbc` while `character_achievement.achievement` is still
-  `smallint unsigned`. A MySQL server without `STRICT` in `sql_mode` clamps such
-  a value to the column maximum instead of refusing it, so two ids collide on the
-  primary key and the whole transaction rolls back with nothing useful in the
-  error. The importer reports that as a pre-flight failure naming the column, the
-  value and the type, before anything is attempted.
+  outgrow their own schema, and the schema does not complain. On the Ascension
+  realm this was built against, `Achievement.dbc` holds 22,603 rows reaching id
+  322,523 -- 7,408 of them above 65,535 -- while
+  `character_achievement.achievement` is still `smallint unsigned`. A MySQL
+  server without `STRICT` in `sql_mode` clamps an out-of-range value to the
+  column maximum instead of refusing it, so all 7,408 collapse onto 65,535, any
+  two of them collide on the primary key, and the whole transaction rolls back
+  with nothing useful in the error. Strings are truncated just as quietly. The
+  importer reports either as a pre-flight failure naming the column, the value
+  and the type, before anything is attempted.
+
+  Widening the column on the target server is the real fix; this check only
+  stops the importer from being the thing that trips over it.
 - **Bundle integrity is checked before anything else.** Eight offline checks per
   character: package digest, checkpoint digest and length, and that the digest is
   listed in the roster, the signed export receipt, the package manifest and the
