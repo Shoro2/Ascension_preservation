@@ -29,6 +29,9 @@ login → world → Character-Advancement path.
    — full boot runbook + everything already solved.
 3. **[`docs/handoffs/HANDOFF-SPELLS-TALENTS-CLASSES.md`](docs/handoffs/HANDOFF-SPELLS-TALENTS-CLASSES.md)**
    — the current frontier: CoA spells, talent trees, custom classes.
+4. **[`docs/KNOWN-ISSUES.md`](docs/KNOWN-ISSUES.md)** — symptom-first list of
+   failures that look like server or protocol bugs but are not. Check it before
+   diagnosing a hang or a silent disconnect.
 
 ## What works
 
@@ -52,6 +55,7 @@ docs/            Protocol specs and narrative write-ups (our RE work)
   WIRE-SPEC.md                  auth (3799) handshake, byte-level
   WORLD-WIRE-SPEC.md            world (8085) handshake
   ASCENSION-NOTES.md            master notes: client layout, redirect, DB rebuild
+  KNOWN-ISSUES.md               symptom-first: hangs/disconnects and their real causes
   protocol/                     opcode + handler maps
   handoffs/                     session handoffs (boot runbook, CoA deep-dives)
 
@@ -71,6 +75,8 @@ data/            CoA CONTENT derived from the client (schema + exports)
 
 tools/           Reverse-engineering + analysis toolkit (~60 scripts)
 reference/       Curated screenshots + Lua/opcode reference text
+  ascension_opcodes.json        opcode id → name, 2058 entries (this client)
+  ascension_custom_opcodes.json 754-entry subset, 749 of them above stock's 0x500 ceiling
 area-52/         Area-52 "Free-Pick" realm-flavour specifics (see its README)
 contrib/         Tools contributed by others, adapted (see each README)
   AscensionRedirect/            WinDivert packet redirect + Frida auth-send probe

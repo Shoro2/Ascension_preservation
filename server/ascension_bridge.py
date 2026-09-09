@@ -66,6 +66,18 @@ import time
 BASE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, BASE)
 
+# Force UTF-8 on the streams we print to.  On Windows these default to the ANSI
+# code page (cp1252), and a single non-ASCII byte in a logged packet dump then
+# raises UnicodeEncodeError inside log() -- on a pump thread, which drops the
+# session.  errors="replace" means a stray byte costs a "?" instead of a
+# disconnect.  Best effort: a redirected or detached stream may have no
+# reconfigure(), and log() carries a matching guard for that case.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 # world_server.py is the canonical source for the crypt, the realm-flavour bytes
 # and every Ascension-custom packet builder; importing keeps the two from drifting.
 # It has no module-level side effects -- everything lives behind __main__.
@@ -388,9 +400,23 @@ _log_lock = threading.Lock()
 
 
 def log(msg):
+    """Never raise.  log() is called from both pump threads, so an exception in
+    here does not just lose a line -- it unwinds the pump and drops the session.
+
+    The stdout write is the dangerous half: a Windows console defaults to cp1252,
+    and any non-ASCII byte in a logged string (a character name, a chat line --
+    describe_chat logs chat in full) makes print() raise UnicodeEncodeError.  That
+    surfaced as an instant disconnect on entering the world.  The streams are
+    reconfigured to UTF-8 at import; this guard covers the case where they could
+    not be (already detached, or a stream that has no reconfigure)."""
     line = "[%s] %s" % (time.strftime("%H:%M:%S"), msg)
     with _log_lock:
-        print(line, flush=True)
+        try:
+            print(line, flush=True)
+        except UnicodeEncodeError:
+            print(line.encode("ascii", "replace").decode("ascii"), flush=True)
+        except Exception:
+            pass
         try:
             with open(LOG_PATH, "a", encoding="utf-8") as f:
                 f.write(line + "\n")
@@ -765,8 +791,18 @@ class Session(object):
                 break
             opcode, body = pkt
             if opcode in (SMSG_CHAR_CREATE, SMSG_CHARACTER_LOGIN_FAILED) and body:
+                # opname() REQUIRES the direction argument.  Calling it with one
+                # argument raised TypeError right here, the instant the core sent
+                # SMSG_CHAR_CREATE -- and because this log sits OUTSIDE the
+                # read_s2c try/except, it took the whole core->client pump thread
+                # down with it.  The create-success ack (and every S->C packet
+                # after it) then never reached the client, so the "Creating
+                # character" dialog hung forever even though the core had already
+                # written the character row.  Cancelling and reconnecting showed
+                # the character present at character-select, which made this look
+                # like a missing server packet rather than a bridge crash.
                 self.log("   S->C %s -> %s"
-                         % (opname(opcode),
+                         % (opname(opcode, False),
                             RESPONSE_CODES.get(body[0], "0x%02X" % body[0])))
             elif opcode == SMSG_CAST_FAILED:
                 self.log("   S->C SMSG_CAST_FAILED %s" % describe_cast_failed(body))
