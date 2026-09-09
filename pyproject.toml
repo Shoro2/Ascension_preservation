@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bindmysoul-importer"
-version = "1.1.0"
+version = "1.1.1"
 description = "Rebuild a Bind My Soul character on your own AzerothCore server, offline."
 readme = "README.md"
 requires-python = ">=3.9"

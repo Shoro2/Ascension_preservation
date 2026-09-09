@@ -172,8 +172,18 @@ class DBC:
         return self.i(row, col) & 0xFFFFFFFF
 
     def s(self, row: int, col: int) -> str:
+        """The string at the offset stored in this column.
+
+        Offset 0 is NOT treated as "no string". Stock 3.3.5a puts a lone NUL
+        first, so offset 0 reads as empty there either way -- but that is a
+        convention, not a rule, and Ascension's DBCs do not follow it. Measured
+        on its tree: the block starts "PLAYER, Human" (Faction), "Fire"
+        (TalentTab), "Pet - Pit Lord" (SkillLine), and exactly one row in each
+        file points at offset 0. Rejecting it would drop that row's name and
+        report the lookup as an unresolved skip.
+        """
         offset = self.i(row, col)
-        if offset <= 0 or offset >= len(self._strings):
+        if offset < 0 or offset >= len(self._strings):
             return ""
         end = self._strings.find(b"\0", offset)
         if end < 0:
@@ -447,10 +457,18 @@ class Resolvers:
     ) -> tuple[Resolution, bool]:
         """Find a talent tab by name, falling back to its index.
 
-        Returns (resolution, matched_positionally). The fallback matters
-        because Ascension blanks some tab names in its own TalentTab.dbc --
-        the client shows "Fire" while the server's row 41 has an empty name --
-        so a name-only lookup would strand every talent in that tab.
+        Returns (resolution, matched_positionally).
+
+        CORRECTED: this fallback was originally justified by the claim that
+        "Ascension blanks some tab names", because TalentTab 41 (Mage Fire)
+        read as empty. Ascension blanks nothing -- `DBC.s` was rejecting string
+        offset 0, and Ascension's string block starts with a real string rather
+        than stock's lone NUL, so exactly one row per DBC lost its name. Fixed
+        in `DBC.s`; row 41 reads "Fire".
+
+        The fallback stays anyway, because a name-only lookup is fragile for
+        reasons that survive that fix: a non-enUS client capture reports
+        localised tab names, and a fork may rename a tab outright.
         """
         tabs = self.talent_tabs_for_class(class_id)
         if not tabs:
