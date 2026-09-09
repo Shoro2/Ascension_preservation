@@ -1,0 +1,503 @@
+#!/usr/bin/env python3
+"""DBC-backed resolvers for the Bind My Soul importer.
+
+The checkpoint stores several things by *name* only, because the 3.3.5a client
+never hands the numeric id to Lua:
+
+    reputations[].name   -> Faction.dbc ID          (character_reputation.faction)
+    skills[].name        -> SkillLine.dbc ID        (character_skills.skill)
+    talentTabs[].talents -> Talent.dbc RankID[rank] (character_talent.spell)
+
+This module reads the target server's own ``Data/dbc`` directory, so the ids it
+produces are always the ids that server will accept -- including on a fork with
+patched DBCs.
+
+Field offsets below are taken from AzerothCore's DBC format strings, which are
+authoritative for this client build:
+
+    src/server/shared/DataStores/DBCfmt.h
+      FactionEntryfmt   "niiiiiiiiiiiiiiiiiiffixssssssssssssssssxxxxxxxxxxxxxxxxxx"
+      SkillLinefmt      "nixssssssssssssssssxxx...ixxx...i"
+      TalentEntryfmt    "niiiiiiiixxxxixxixxixxx"
+      TalentTabEntryfmt "nxxxxxxxxxxxxxxxxxxxiiix"
+      GlyphPropertiesfmt "niix"
+
+and the matching structs in DBCStructure.h. Every offset is re-checked against
+the file's own header at load time (see ``_expect_fields``), so a fork that
+widened a DBC fails loudly instead of silently reading garbage.
+"""
+
+from __future__ import annotations
+
+import os
+import struct
+from dataclasses import dataclass
+from typing import Any, Iterable
+
+__all__ = [
+    "DBC",
+    "DbcError",
+    "Resolvers",
+    "Resolution",
+    "class_mask",
+    "race_mask",
+]
+
+# -- field offsets (0-based, all fields are 4 bytes in WDBC) ---------------
+
+FACTION_ID = 0
+FACTION_REP_LIST_ID = 1
+FACTION_RACE_MASK = 2      # ..5
+FACTION_CLASS_MASK = 6     # ..9
+FACTION_BASE_REP = 10      # ..13
+FACTION_REP_FLAGS = 14     # ..17
+FACTION_NAME = 23          # enUS, first of 16 locale strings
+FACTION_FIELDS = 57
+
+SKILL_ID = 0
+SKILL_CATEGORY = 1
+SKILL_NAME = 3             # enUS displayName
+SKILL_FIELDS = 56
+
+TALENT_ID = 0
+TALENT_TAB = 1
+TALENT_ROW = 2
+TALENT_COL = 3
+TALENT_RANK = 4            # RankID[0..4]
+TALENT_MAX_RANK = 5
+TALENT_FIELDS = 23
+
+TALENTTAB_ID = 0
+TALENTTAB_NAME = 1         # enUS, first of 16 locale strings
+TALENTTAB_CLASS_MASK = 20
+TALENTTAB_PAGE = 22
+TALENTTAB_FIELDS = 24
+
+SPELL_ID = 0
+SPELL_NAME = 136           # enUS; matches tools/spellname.py
+SPELL_FIELDS = 234
+
+GLYPH_ID = 0
+GLYPH_SPELL_ID = 1
+GLYPH_FIELDS = 4
+
+# FactionFlags the server actually reads back out of character_reputation
+# (ReputationMgr::LoadFromDB reads only these three bits).
+FACTION_FLAG_VISIBLE = 0x01
+FACTION_FLAG_AT_WAR = 0x02
+FACTION_FLAG_INACTIVE = 0x20
+
+
+class DbcError(Exception):
+    """A DBC file is missing, malformed, or has an unexpected shape."""
+
+
+def race_mask(race_id: int) -> int:
+    return 1 << (int(race_id) - 1)
+
+
+def class_mask(class_id: int) -> int:
+    return 1 << (int(class_id) - 1)
+
+
+class DBC:
+    """Minimal WDBC (3.3.5a) reader.
+
+    Header is 5 x uint32: magic 'WDBC', recordCount, fieldCount, recordSize,
+    stringBlockSize. Every field is 4 bytes; how to read it is the caller's
+    business.
+    """
+
+    def __init__(self, path: str):
+        self.path = path
+        try:
+            with open(path, "rb") as handle:
+                data = handle.read()
+        except OSError as exc:
+            raise DbcError(f"Cannot read {path}: {exc}") from exc
+        if len(data) < 20:
+            raise DbcError(f"{path} is too small to be a DBC.")
+        magic, self.count, self.fields, self.record_size, _str_size = struct.unpack_from(
+            "<4sIIII", data, 0
+        )
+        if magic != b"WDBC":
+            raise DbcError(f"{path} is not a WDBC file (magic={magic!r}).")
+        body = 20 + self.count * self.record_size
+        self._records = data[20:body]
+        self._strings = data[body:]
+        total = self.count * self.fields
+        self._ints: tuple[int, ...] = struct.unpack_from("<%di" % total, self._records, 0)
+        self.widened = False
+
+    def _expect_fields(self, expected: int) -> None:
+        """Refuse to read a DBC that is narrower than the layout we assume.
+
+        A fork that *appends* columns leaves every offset below intact, so a
+        wider file is fine (``self.widened`` records it for the preflight
+        report). A narrower one means columns were removed or the layout was
+        rewritten, and reading it would silently yield the wrong ids.
+        """
+        self.widened = self.fields > expected
+        if self.fields < expected:
+            raise DbcError(
+                f"{os.path.basename(self.path)} has {self.fields} fields, expected at "
+                f"least {expected}. This DBC's layout differs from 3.3.5a; the "
+                "importer's field offsets would read the wrong columns."
+            )
+
+    def i(self, row: int, col: int) -> int:
+        return self._ints[row * self.fields + col]
+
+    def u(self, row: int, col: int) -> int:
+        return self.i(row, col) & 0xFFFFFFFF
+
+    def s(self, row: int, col: int) -> str:
+        offset = self.i(row, col)
+        if offset <= 0 or offset >= len(self._strings):
+            return ""
+        end = self._strings.find(b"\0", offset)
+        if end < 0:
+            end = len(self._strings)
+        return self._strings[offset:end].decode("utf-8", "replace")
+
+    def __len__(self) -> int:
+        return self.count
+
+    def __repr__(self) -> str:
+        return "<DBC %s rows=%d fields=%d>" % (
+            os.path.basename(self.path),
+            self.count,
+            self.fields,
+        )
+
+
+@dataclass
+class Resolution:
+    """The outcome of one name -> id lookup."""
+
+    ok: bool
+    value: int = 0
+    reason: str = ""
+
+    def __bool__(self) -> bool:
+        return self.ok
+
+
+def _norm(text: Any) -> str:
+    return " ".join(str(text or "").split()).casefold()
+
+
+class Resolvers:
+    """Name -> id lookups against one server's DBC directory.
+
+    Every table is loaded lazily, so a run that never touches talents never
+    pays for Spell.dbc (which is ~90 MB of strings).
+    """
+
+    def __init__(self, dbc_dir: str):
+        self.dbc_dir = dbc_dir
+        if not os.path.isdir(dbc_dir):
+            raise DbcError(f"DBC directory not found: {dbc_dir}")
+        self._cache: dict[str, DBC] = {}
+        self._faction_by_name: dict[str, list[int]] | None = None
+        self._faction_rows: dict[int, int] | None = None
+        self._skill_by_name: dict[str, list[int]] | None = None
+        self._spell_names: dict[int, str] | None = None
+        self._talent_index: dict[int, dict[str, list[int]]] | None = None
+        self._talent_tabs: list[tuple[int, str, int, int]] | None = None
+        self._glyph_by_spell: dict[int, int] | None = None
+
+    # -- file access ------------------------------------------------------
+
+    def _open(self, name: str, expect_fields: int | None = None) -> DBC:
+        if name not in self._cache:
+            path = os.path.join(self.dbc_dir, name)
+            if not os.path.isfile(path):
+                raise DbcError(
+                    f"{name} not found in {self.dbc_dir}. Point --dbc-dir at the "
+                    "server's Data/dbc directory."
+                )
+            dbc = DBC(path)
+            if expect_fields is not None:
+                dbc._expect_fields(expect_fields)
+            self._cache[name] = dbc
+        return self._cache[name]
+
+    def available(self) -> dict[str, bool]:
+        """Which DBCs the resolvers need, and whether they are present."""
+        wanted = [
+            "Faction.dbc",
+            "SkillLine.dbc",
+            "Talent.dbc",
+            "TalentTab.dbc",
+            "Spell.dbc",
+            "GlyphProperties.dbc",
+        ]
+        return {n: os.path.isfile(os.path.join(self.dbc_dir, n)) for n in wanted}
+
+    # -- factions ---------------------------------------------------------
+
+    def _load_factions(self) -> None:
+        if self._faction_by_name is not None:
+            return
+        dbc = self._open("Faction.dbc", FACTION_FIELDS)
+        by_name: dict[str, list[int]] = {}
+        rows: dict[int, int] = {}
+        for row in range(len(dbc)):
+            faction_id = dbc.u(row, FACTION_ID)
+            rows[faction_id] = row
+            name = _norm(dbc.s(row, FACTION_NAME))
+            if name:
+                by_name.setdefault(name, []).append(faction_id)
+        self._faction_by_name = by_name
+        self._faction_rows = rows
+
+    def faction_by_name(self, name: str) -> Resolution:
+        """Resolve a reputation pane name to a Faction.dbc ID.
+
+        Only factions with reputationListID >= 0 can appear in the pane, so
+        that filter resolves nearly every duplicate name on its own.
+        """
+        self._load_factions()
+        assert self._faction_by_name is not None and self._faction_rows is not None
+        dbc = self._open("Faction.dbc", FACTION_FIELDS)
+        candidates = self._faction_by_name.get(_norm(name), [])
+        if not candidates:
+            return Resolution(False, reason="no faction with this name in Faction.dbc")
+        listed = [
+            fid
+            for fid in candidates
+            if dbc.i(self._faction_rows[fid], FACTION_REP_LIST_ID) >= 0
+        ]
+        pool = listed or candidates
+        if len(pool) > 1:
+            return Resolution(
+                False,
+                reason="ambiguous: Faction.dbc has %d factions named this (%s)"
+                % (len(pool), ", ".join(str(f) for f in sorted(pool)[:5])),
+            )
+        return Resolution(True, pool[0])
+
+    def faction_base_rep(self, faction_id: int, race_id: int, class_id: int) -> int:
+        """GetBaseReputation(): the standing the character starts with.
+
+        character_reputation.standing is stored *relative* to this, so the
+        importer must subtract it from the absolute value the addon captured.
+        Mirrors ReputationMgr::GetBaseReputation (ReputationMgr.cpp).
+        """
+        return self._faction_base(faction_id, race_id, class_id, FACTION_BASE_REP)
+
+    def faction_default_flags(self, faction_id: int, race_id: int, class_id: int) -> int:
+        """GetDefaultStateFlags(): the DBC flags for this race/class."""
+        return self._faction_base(faction_id, race_id, class_id, FACTION_REP_FLAGS)
+
+    def _faction_base(self, faction_id: int, race_id: int, class_id: int, base_col: int) -> int:
+        self._load_factions()
+        assert self._faction_rows is not None
+        row = self._faction_rows.get(int(faction_id))
+        if row is None:
+            return 0
+        dbc = self._open("Faction.dbc", FACTION_FIELDS)
+        rmask = race_mask(race_id)
+        cmask = class_mask(class_id)
+        for index in range(4):
+            faction_races = dbc.u(row, FACTION_RACE_MASK + index)
+            faction_classes = dbc.u(row, FACTION_CLASS_MASK + index)
+            if (faction_races & rmask or (faction_races == 0 and faction_classes != 0)) and (
+                faction_classes & cmask or faction_classes == 0
+            ):
+                return dbc.i(row, base_col + index)
+        return 0
+
+    # -- skills -----------------------------------------------------------
+
+    def _load_skills(self) -> None:
+        if self._skill_by_name is not None:
+            return
+        dbc = self._open("SkillLine.dbc", SKILL_FIELDS)
+        by_name: dict[str, list[int]] = {}
+        for row in range(len(dbc)):
+            name = _norm(dbc.s(row, SKILL_NAME))
+            if name:
+                by_name.setdefault(name, []).append(dbc.u(row, SKILL_ID))
+        self._skill_by_name = by_name
+
+    def skill_by_name(self, name: str) -> Resolution:
+        self._load_skills()
+        assert self._skill_by_name is not None
+        candidates = self._skill_by_name.get(_norm(name), [])
+        if not candidates:
+            return Resolution(False, reason="no skill with this name in SkillLine.dbc")
+        if len(candidates) > 1:
+            return Resolution(
+                False,
+                reason="ambiguous: %d skills named this (%s)"
+                % (len(candidates), ", ".join(str(s) for s in sorted(candidates)[:5])),
+            )
+        return Resolution(True, candidates[0])
+
+    # -- spells / talents -------------------------------------------------
+
+    def spell_name(self, spell_id: int) -> str:
+        self._load_spell_names()
+        assert self._spell_names is not None
+        return self._spell_names.get(int(spell_id), "")
+
+    def spell_exists(self, spell_id: int) -> bool:
+        self._load_spell_names()
+        assert self._spell_names is not None
+        return int(spell_id) in self._spell_names
+
+    def _load_spell_names(self) -> None:
+        if self._spell_names is not None:
+            return
+        dbc = self._open("Spell.dbc")
+        if dbc.fields <= SPELL_NAME:
+            raise DbcError(
+                "Spell.dbc has %d fields; the enUS name column (%d) is out of range."
+                % (dbc.fields, SPELL_NAME)
+            )
+        self._spell_names = {
+            dbc.u(row, SPELL_ID): dbc.s(row, SPELL_NAME) for row in range(len(dbc))
+        }
+
+    def _load_talents(self) -> None:
+        """Index talents by tab, then by the name of their first rank's spell.
+
+        Positional (tier, column) lookup is deliberately NOT used: an Ascension
+        capture packs many talents into the same grid cell and reorders the
+        tabs, so the client's tier/column carry no meaning on the target
+        server. The rank-1 spell name is the only stable key.
+        """
+        if self._talent_index is not None:
+            return
+        self._load_spell_names()
+        assert self._spell_names is not None
+        tab_dbc = self._open("TalentTab.dbc", TALENTTAB_FIELDS)
+        tabs = [
+            (
+                tab_dbc.u(row, TALENTTAB_ID),
+                tab_dbc.s(row, TALENTTAB_NAME),
+                tab_dbc.u(row, TALENTTAB_CLASS_MASK),
+                tab_dbc.u(row, TALENTTAB_PAGE),
+            )
+            for row in range(len(tab_dbc))
+        ]
+        talent_dbc = self._open("Talent.dbc", TALENT_FIELDS)
+        index: dict[int, dict[str, list[int]]] = {}
+        for row in range(len(talent_dbc)):
+            tab_id = talent_dbc.u(row, TALENT_TAB)
+            first_rank = talent_dbc.u(row, TALENT_RANK)
+            name = _norm(self._spell_names.get(first_rank, ""))
+            if not name:
+                continue
+            index.setdefault(tab_id, {}).setdefault(name, []).append(row)
+        self._talent_tabs = tabs
+        self._talent_index = index
+
+    def talent_tabs_for_class(self, class_id: int) -> list[tuple[int, str, int, int]]:
+        """This class's talent tabs, in the order the client indexes them.
+
+        GetTalentTabInfo(i) walks the class's tabs by TalentTab ID ascending,
+        not by tabpage. Verified against a real capture: an Ascension Mage
+        reports tabIndex 1/2/3 with 57/56/69 talents, which is exactly
+        TalentTab 41/61/81 in that server's Talent.dbc.
+        """
+        self._load_talents()
+        assert self._talent_tabs is not None
+        cmask = class_mask(class_id)
+        return sorted((tab for tab in self._talent_tabs if tab[2] & cmask), key=lambda t: t[0])
+
+    def resolve_talent_tab(
+        self, class_id: int, tab_name: str, tab_index: int = 0
+    ) -> tuple[Resolution, bool]:
+        """Find a talent tab by name, falling back to its index.
+
+        Returns (resolution, matched_positionally). The fallback matters
+        because Ascension blanks some tab names in its own TalentTab.dbc --
+        the client shows "Fire" while the server's row 41 has an empty name --
+        so a name-only lookup would strand every talent in that tab.
+        """
+        tabs = self.talent_tabs_for_class(class_id)
+        if not tabs:
+            return Resolution(False, reason="this class has no talent tabs in TalentTab.dbc"), False
+        named = [tab for tab in tabs if _norm(tab[1]) == _norm(tab_name)] if tab_name else []
+        if len(named) == 1:
+            return Resolution(True, named[0][0]), False
+        if len(named) > 1:
+            return Resolution(False, reason="ambiguous talent tab name %r" % tab_name), False
+        index = int(tab_index or 0)
+        if 1 <= index <= len(tabs):
+            return Resolution(True, tabs[index - 1][0]), True
+        return (
+            Resolution(
+                False,
+                reason="no tab named %r for this class, and tabIndex %r is outside 1..%d"
+                % (tab_name, tab_index, len(tabs)),
+            ),
+            False,
+        )
+
+    def talent_spell(
+        self, class_id: int, tab_name: str, talent_name: str, rank: int, tab_index: int = 0
+    ) -> Resolution:
+        """(class, tab, talent name, rank) -> the spell id that rank teaches."""
+        self._load_talents()
+        assert self._talent_index is not None
+        rank = int(rank)
+        if rank < 1:
+            return Resolution(False, reason="rank is zero; nothing to learn")
+        if rank > TALENT_MAX_RANK:
+            return Resolution(False, reason=f"rank {rank} exceeds the 5 ranks Talent.dbc stores")
+        tab, _positional = self.resolve_talent_tab(class_id, tab_name, tab_index)
+        if not tab.ok:
+            return tab
+        rows = self._talent_index.get(tab.value, {}).get(_norm(talent_name), [])
+        if not rows:
+            return Resolution(
+                False, reason="no talent named %r in this tab" % talent_name
+            )
+        talent_dbc = self._open("Talent.dbc", TALENT_FIELDS)
+        # A patched Talent.dbc can list the same talent more than once. That is
+        # only a real ambiguity if the copies teach *different* spells at this
+        # rank; identical copies collapse to one answer.
+        spells = {talent_dbc.u(row, TALENT_RANK + rank - 1) for row in rows}
+        spells.discard(0)
+        if not spells:
+            return Resolution(
+                False, reason="%r has no rank %d on this server" % (talent_name, rank)
+            )
+        if len(spells) > 1:
+            return Resolution(
+                False,
+                reason="ambiguous: %d talents named %r in this tab teach different rank-%d "
+                "spells (%s)"
+                % (len(rows), talent_name, rank, ", ".join(str(s) for s in sorted(spells)[:4])),
+            )
+        return Resolution(True, spells.pop())
+
+    # -- glyphs -----------------------------------------------------------
+
+    def glyph_by_spell(self, spell_id: int) -> Resolution:
+        if self._glyph_by_spell is None:
+            dbc = self._open("GlyphProperties.dbc", GLYPH_FIELDS)
+            self._glyph_by_spell = {
+                dbc.u(row, GLYPH_SPELL_ID): dbc.u(row, GLYPH_ID) for row in range(len(dbc))
+            }
+        found = self._glyph_by_spell.get(int(spell_id))
+        if not found:
+            return Resolution(False, reason="no glyph in GlyphProperties.dbc casts this spell")
+        return Resolution(True, found)
+
+
+def known_spell_filter(resolvers: Resolvers, spell_ids: Iterable[Any]) -> tuple[list[int], list[int]]:
+    """Split captured spell ids into (present on this server, absent)."""
+    present: list[int] = []
+    absent: list[int] = []
+    for raw in spell_ids or []:
+        try:
+            spell_id = int(raw)
+        except (TypeError, ValueError):
+            continue
+        (present if resolvers.spell_exists(spell_id) else absent).append(spell_id)
+    return present, absent

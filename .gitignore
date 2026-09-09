@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+
+# Never commit a character capture or anything lifted out of one: these are
+# other people's characters, and a bundle identifies the account that made it.
+*.bmsr.zip
+*.bmsp
+BindMySoul.lua
+
+# Scratch scripts follow this prefix by convention.
+_*.py
