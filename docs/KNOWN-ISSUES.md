@@ -277,15 +277,32 @@ Morogh`; `ChrClasses` id 1 → offset 0 → `Warrior`.
 
 One-character-short strings come from reading a **numeric column as a string
 offset**. A field holding the small constant 1 decodes as the first string
-minus its first byte, which looks exactly like a subtly corrupted name. In
-`AreaTable` the `un Morogh` that prompted the original claim came from field 0
-— the record ID.
+minus its first byte, which looks exactly like a subtly corrupted name. There
+are two ways in, and they need different defences.
 
-> The tell is that the value is identical on every row. A name column never is.
+**Field 0 — exclude it structurally.** Field 0 is always the record ID, so
+iterate string candidates from field 1. This is what produced the `un Morogh`
+that prompted the original claim. No statistical test will catch it: an ID
+column has the *maximal* distinct count (2,849 of 2,849 rows in `AreaTable`),
+so it passes any "is this varied enough to be a name?" check with room to
+spare.
 
-Count distinct values down the column before believing a string field: in
-Ascension's `ChrClasses` the real name column has 32 distinct values across 32
-rows, while the fields that decode one character short have 2 and 5.
+**Every other field — count distinct values.** Flag and count columns hold
+small constants, and 0 or 1 lands inside the string block:
+
+| file | field | distinct values | rows holding 1 | decodes as |
+|---|---|---|---|---|
+| `ChrClasses` | 3 | 2 of 32 | 31 | `arrior` |
+| `BattlemasterList` | 10 | 2 of 73 | 71 | `lterac Valley` |
+| `Spell` | 19 | 4 of 209,509 | 20,989 | `PDATE YOUR CLIENT!` |
+
+> Among fields 1..n, the tell is that the value repeats down the column. A name
+> column does not — `ChrClasses`'s real name column has 32 distinct values
+> across 32 rows.
+
+Note the two tests point opposite ways, which is why one alone is not enough:
+the ID is caught by position and never by variance, the flag columns by
+variance and never by position.
 
 **So the NUL artifact is not what fakes "RENUMBERED" verdicts.** It can only
 blank the single row that points at offset 0 — one row per file. A whole audit
