@@ -4487,7 +4487,7 @@ def parse_char_create(body):
 # A freshly created character starts at 1, not at ARCHIVE_LEVEL, and that is
 # load-bearing rather than flavour.  The archetype chosen during creation is
 # never sent to the server -- CMSG_CHAR_CREATE stays byte-for-byte stock 3.3.5
-# (verified: 17 B for "Testbeta", no trailing fields).  Instead
+# (verified: a 7-character name gives a 17 B body, no trailing fields).  Instead
 # SharedXML/Util/NewCharacterSetupUtil.lua wraps CreateCharacter, stores
 # archetypeBuildID in a client-side WTF blob keyed by GetRealmName() and the
 # character name, and applies it on the character's FIRST login:
