@@ -126,6 +126,36 @@ Tier 6 Leg Vendor`, …), not padding. So measure the DBC set that produced
 **the data you intend to store**, which for any import is the source's set and
 not your `DataDir`.
 
+### Find the config the server is actually running
+
+Answering "which set is mine" means finding which config the worldserver was
+started with — and a config located by convention is not necessarily that one.
+Auto-discovery that matches on filename (`worldserver.conf`) and on a `configs/`
+or `etc/` directory will not find a config named or placed differently. In this
+archive the bridge realm runs `worldserver-bridge.conf` from the realm
+directory, which fails both tests; discovery instead finds the unused
+`server-ascension/configs/worldserver.conf`, which carries **the same three
+DSNs** and a **different `DataDir`**.
+
+That combination is the dangerous one. Every database check passes, so the
+config looks confirmed, while every DBC-derived answer is quietly computed
+against the wrong tree.
+
+Ask the running process for its own `-c` instead of guessing:
+
+```powershell
+Get-CimInstance Win32_Process -Filter "Name='worldserver.exe'" |
+    Select-Object ProcessId, CommandLine
+```
+
+```sh
+tr '\0' ' ' < /proc/<pid>/cmdline
+```
+
+And treat a candidate config that agrees on the DSNs but disagrees on `DataDir`
+as a hard failure rather than a usable fallback — matching DSNs are what makes
+the wrong config convincing.
+
 ### Verdict for this archive
 
 `asc_characters` **is** exposed and should be widened. It has not bitten yet
