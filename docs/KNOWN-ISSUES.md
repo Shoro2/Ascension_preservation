@@ -66,56 +66,82 @@ down a session.
 
 ## 3. Character creation rolls back in the database (not a bridge issue)
 
-*Reported by a downstream adopter of this bridge; recorded here because it
-produces the same "soft-lock on creating character" symptom as issue 1 above, and
-the two are easy to confuse. Not reproduced in this archive.*
+*First reported by a downstream adopter of this bridge. Recorded here because it
+produces the same "soft-lock on creating character" symptom as issue 1 above and
+the two are easy to confuse — and because this archive **is** exposed to it, by
+a route that a naive check reports as safe.*
 
-A CoA-merged `Achievement_Criteria.dbc` contains criteria IDs above 65535.
-AzerothCore binds those as `uint32`, but the stock character-table columns are
-16-bit, so MySQL clamps the value to 65535 → primary-key collision → the whole
-`CMSG_CHAR_CREATE` transaction rolls back.
+Ascension's `Achievement.dbc` / `Achievement_Criteria.dbc` contain IDs far above
+65535. AzerothCore binds those as `uint32`, but the stock character-table columns
+are 16-bit:
+
+```
+character_achievement           PRIMARY KEY (guid, achievement)   achievement smallint unsigned
+character_achievement_progress  PRIMARY KEY (guid, criteria)      criteria    smallint unsigned
+```
+
+Under non-strict `sql_mode` MySQL **clamps** an oversized id to 65535 instead of
+erroring. Two different high IDs therefore become the same row key, collide on
+the primary key, and roll the transaction back.
 
 The tell that distinguishes it from issue 1: here the character is **not**
 created, so it is absent at character-select. In issue 1 the character exists.
 
-**Check the DBC before you touch the database** — it is the cheaper test, and it
-answers whether you are exposed at all. Field 0 of a WDBC record is the ID:
+### Measure the right DBC set
+
+Field 0 of a WDBC record is the ID, and records start at byte 20:
 
 ```python
 import struct
-with open("Data/dbc/Achievement_Criteria.dbc", "rb") as f:
+with open("Achievement.dbc", "rb") as f:
     magic, n, fields, recsize, sbs = struct.unpack("<4sIIII", f.read(20))
     data = f.read(n * recsize)
 ids = [struct.unpack_from("<I", data, i * recsize)[0] for i in range(n)]
-print(max(ids), sum(1 for i in ids if i > 65535))
+print(len(ids), max(ids), sum(1 for i in ids if i > 65535))
 ```
 
-The DBC set in this archive reports `13470 0` — max id 13,470 across 7,655
-criteria, nothing above the ceiling.
+**Which file you point that at is the whole question, and the two obvious
+choices disagree.** In this archive:
 
-**But read that result narrowly.** The DBC bounds only what *the core* writes
-for achievements earned on this server, which is the `CMSG_CHAR_CREATE` path
-described above. It says nothing about ids arriving from anywhere else. Any
-tool that writes `character_achievement` rows from **externally captured
-character data** — a save/restore importer, a migration off a live realm — is
-carrying ids from that service's DBC set, not yours, and is exposed no matter
-what your own DBCs say. Non-strict MySQL (`sql_mode` without `STRICT_*`, which
-is the AzerothCore default) clamps rather than errors, so the failure is
-silent.
+| DBC set | `Achievement.dbc` | ids > 65535 |
+|---|---|---|
+| the server's `DataDir` (`server/Data/dbc`) | 1,817 rows, max 4,824 | **0** |
+| the Ascension set (`server-ascension/Data/dbc`) | 22,603 rows, max 322,523 | **7,408** |
 
-So: safe for character creation here; **not** a blanket all-clear for the
-database. Widen the columns before running any importer of external character
-data, and check `SELECT @@SESSION.sql_mode` while you are at it.
+Both numbers are real. The bridge worldserver is deliberately pointed at the
+*vanilla* DBCs — that is what the bridge translates onto — so achievements
+**earned in-game here** cannot exceed 4,824 and the `CMSG_CHAR_CREATE` path is
+genuinely safe. Checking `DataDir` and stopping there reports "not exposed".
+
+That is the trap. **The column has to hold every ID that will ever be written
+to it, not just the ones this server generates.** Imported or restored
+characters carry the IDs of the service they were captured from — the 322,523
+set — and the high ones are ordinary named rows (70001 `Unlocked Tier 6 Chest
+Vendor`, 70002 `Unlocked Tier 6 Leg Vendor`, …), not padding. So measure the
+DBC set that produced **the data you intend to store**, which for any import is
+the source's set and not your `DataDir`.
+
+### Verdict for this archive
+
+`asc_characters` **is** exposed and should be widened. It has not bitten yet
+only because `character_achievement` is still empty — it needs a genuinely
+progressed imported character.
 
 ```sql
--- widen if your Achievement_Criteria.dbc carries ids > 65535
-ALTER TABLE <characters_db>.character_achievement_progress
-    MODIFY `criteria`    INT UNSIGNED NOT NULL;
 ALTER TABLE <characters_db>.character_achievement
     MODIFY `achievement` INT UNSIGNED NOT NULL;
+ALTER TABLE <characters_db>.character_achievement_progress
+    MODIFY `criteria`    INT UNSIGNED NOT NULL;
 ```
 
-Check before changing anything:
+Confirm the mode you are actually running under first — with
+`STRICT_TRANS_TABLES` you would get a real error instead of a silent clamp:
+
+```sql
+SELECT @@SESSION.sql_mode;
+```
+
+And confirm the current column widths before and after:
 
 ```sql
 SELECT TABLE_NAME, COLUMN_NAME, COLUMN_TYPE
