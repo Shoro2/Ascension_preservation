@@ -158,9 +158,18 @@ the wrong config convincing.
 
 ### Verdict for this archive
 
-`asc_characters` **is** exposed and should be widened. It has not bitten yet
-only because `character_achievement` is still empty — it needs a genuinely
-progressed imported character.
+This archive's characters database **was** exposed and has now been widened —
+applied 2026-09-09, both columns re-read from `information_schema` as `int
+unsigned` afterwards. It never bit, because `character_achievement` was still
+empty; it needed a genuinely progressed imported character.
+
+Two things made it cheap, and both are worth checking before you copy the
+approach. The tables were tiny here (0 and 54 rows), so the rebuild was
+momentary and the realm stayed up — on a populated realm
+`character_achievement_progress` is one of the larger tables and that is no
+longer true. And `int unsigned` is four orders of magnitude above the measured
+Ascension maxima (322,523 and 313,488), so this is a one-time fix rather than a
+wider stopgap that will need revisiting.
 
 ```sql
 ALTER TABLE <characters_db>.character_achievement
