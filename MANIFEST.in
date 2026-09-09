@@ -1,0 +1,6 @@
+# The sdist should carry everything needed to verify the thing you just
+# downloaded: the suite, and the one dependency it declares.
+include LICENSE
+include README.md
+include requirements.txt
+include test_*.py

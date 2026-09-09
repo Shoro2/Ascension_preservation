@@ -112,7 +112,9 @@ The importer is built to be hard to misuse.
   choose a new name at login. Your existing characters are never touched.
 - **It refuses to write to a running realm.** The worldserver caches character
   data in memory and would overwrite rows inserted underneath it. Stop the realm
-  first. (`--allow-online` exists, but you almost certainly do not want it.)
+  before `--apply`. (`--allow-online` exists, but you almost certainly do not
+  want it.) A dry run still works with the realm up, so you can see exactly what
+  the import would do before you take anyone offline.
 - **It will not guess between realms.** See above.
 - **Bundle integrity is checked before anything else.** Eight offline checks per
   character: package digest, checkpoint digest and length, and that the digest is

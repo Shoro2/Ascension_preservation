@@ -18,10 +18,16 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from bms_import import (  # noqa: E402
     EQUIPMENT_CACHE_MAX,
     EQUIPMENT_CACHE_SIZE,
+    FAIL,
+    OK,
+    WARN,
+    Check,
     Plan,
     _captured_durability,
     _durability,
     _equipment_cache,
+    blocks_planning,
+    blocks_writing,
     equipment_cache_width,
     resolve_settings,
 )
@@ -359,6 +365,50 @@ class DurabilityTests(unittest.TestCase):
                 ({}, 30, 30)]                                                 # Boots
         for record, template_max, expected in real:
             self.assertEqual(_durability(record, template_max), expected)
+
+
+class GatingTests(unittest.TestCase):
+    """Which failures stop a preview, and which stop a write.
+
+    The distinction exists because a dry run touches nothing. Someone with a
+    realm up should still be able to see what the import would do; they simply
+    cannot commit it until they take the realm down.
+    """
+
+    REALM_UP = Check("realm stopped", FAIL, "worldserver.exe is running",
+                     write_only=True)
+    NO_ACCOUNT = Check("target account", FAIL, "no such account")
+
+    def test_checks_block_writing_by_default(self):
+        """write_only must be opt-in: a plain FAIL stops everything."""
+        self.assertFalse(Check("x", FAIL, "d").write_only)
+        self.assertTrue(blocks_planning([self.NO_ACCOUNT]))
+
+    def test_a_running_realm_does_not_stop_a_preview(self):
+        self.assertFalse(blocks_planning([self.REALM_UP]))
+
+    def test_a_running_realm_does_stop_a_write(self):
+        stoppers = blocks_writing([self.REALM_UP])
+        self.assertEqual([c.name for c in stoppers], ["realm stopped"])
+
+    def test_a_real_failure_stops_both(self):
+        checks = [self.NO_ACCOUNT]
+        self.assertTrue(blocks_planning(checks))
+        self.assertEqual(len(blocks_writing(checks)), 1)
+
+    def test_a_write_only_failure_does_not_mask_a_real_one(self):
+        checks = [self.REALM_UP, self.NO_ACCOUNT]
+        self.assertTrue(blocks_planning(checks))
+        self.assertEqual(len(blocks_writing(checks)), 2)
+
+    def test_passes_and_warnings_block_nothing(self):
+        checks = [Check("a", OK, "fine"), Check("b", WARN, "noted")]
+        self.assertFalse(blocks_planning(checks))
+        self.assertEqual(blocks_writing(checks), [])
+
+    def test_no_checks_at_all_blocks_nothing(self):
+        self.assertFalse(blocks_planning([]))
+        self.assertEqual(blocks_writing([]), [])
 
 
 if __name__ == "__main__":

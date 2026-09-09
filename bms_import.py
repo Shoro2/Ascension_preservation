@@ -106,6 +106,23 @@ class Check:
     name: str
     status: str
     detail: str
+    # A FAIL that must stop --apply but not a read-only dry run.
+    write_only: bool = False
+
+
+def blocks_planning(checks: list[Check]) -> bool:
+    """Can we still build a plan?
+
+    A write-only failure -- the realm being up -- must not stop a dry run.
+    Planning reads the database and writes nothing, and previewing the import
+    before taking the realm down is the natural order to do this in.
+    """
+    return any(c.status == FAIL and not c.write_only for c in checks)
+
+
+def blocks_writing(checks: list[Check]) -> list[Check]:
+    """Every failure blocks a write, write-only ones included."""
+    return [c for c in checks if c.status == FAIL]
 
 
 @dataclass
@@ -276,6 +293,7 @@ def preflight(conn, args: argparse.Namespace, checkpoint, resolvers: Resolvers |
             f"{why}. worldserver caches characters in memory (sCharacterCache), so a "
             "character inserted now would be invisible to it and may be overwritten. "
             "Stop the realm, or pass --allow-online if you accept that.",
+            write_only=True,
         ))
     elif live:
         checks.append(Check("realm stopped", WARN, f"{why} -- overridden with --allow-online."))
@@ -1199,6 +1217,9 @@ def report_json(checkpoint, checks: list[Check], plan: Plan | None) -> dict[str,
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
+        # Python 3.14 otherwise prints the interpreter plus the full path to
+        # the console script, which is nobody's idea of a usage line.
+        prog=os.path.basename(sys.argv[0]) or "bms-import",
         description="Import a Bind My Soul checkpoint into an AzerothCore realm.",
         epilog="The realm must be stopped. Nothing is written without --apply.",
     )
@@ -1442,7 +1463,7 @@ def main(argv: list[str]) -> int:
     try:
         entry = bundle.entries[args.index] if bundle is not None else None
         checks = preflight(conn, args, checkpoint, resolvers, entry)
-        blocked = any(c.status == FAIL for c in checks)
+        blocked = blocks_planning(checks)
         plan = None
         if not blocked and resolvers is not None:
             try:
@@ -1454,7 +1475,7 @@ def main(argv: list[str]) -> int:
         if plan is not None:
             # Every planned row measured against the live schema, read-only.
             checks.extend(validate_rows(conn, args, plan))
-            blocked = blocked or any(c.status == FAIL for c in checks)
+            blocked = blocked or blocks_planning(checks)
 
         print(render(args, checkpoint, checks, plan))
 
@@ -1466,6 +1487,16 @@ def main(argv: list[str]) -> int:
         if blocked or plan is None:
             print("\nBLOCKED -- nothing was written.")
             return 1
+
+        if args.apply or args.rehearse:
+            # Both of these touch the database, so now every failure counts --
+            # including the write-only ones the dry run was allowed to sail past.
+            stoppers = blocks_writing(checks)
+            if stoppers:
+                for check in stoppers:
+                    print("\nBLOCKED by %s: %s" % (check.name, check.detail))
+                print("\nBLOCKED -- nothing was written.")
+                return 1
         if args.rehearse:
             written = apply_plan(conn, args, plan, rehearse=True)
             print("\nREHEARSED -- every statement ran against the live schema, then the "
