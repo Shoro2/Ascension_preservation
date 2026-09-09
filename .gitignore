@@ -53,3 +53,5 @@ Thumbs.db
 # --- large/raw screenshot dumps (keep only reference/screenshots/) ---
 shots/
 rexxar-reference/live-00*.png
+reference/screenshots/live-*.png
+live-*.png
