@@ -178,9 +178,15 @@ class DBC:
         first, so offset 0 reads as empty there either way -- but that is a
         convention, not a rule, and Ascension's DBCs do not follow it. Measured
         on its tree: the block starts "PLAYER, Human" (Faction), "Fire"
-        (TalentTab), "Pet - Pit Lord" (SkillLine), and exactly one row in each
-        file points at offset 0. Rejecting it would drop that row's name and
-        report the lookup as an unresolved skip.
+        (TalentTab 41, i.e. Mage Fire), "Pet - Pit Lord" (SkillLine).
+        Rejecting offset 0 drops those names and reports the lookup as an
+        unresolved skip rather than an error.
+
+        String blocks DEDUPLICATE, so the affected rows are every row whose
+        name equals the block's first string -- not one row per file. Usually
+        that is one; Achievement.dbc has two (ids 3 and 5610, both
+        "Son of a..."). Stock has none in any file checked, which is exactly
+        why this stays invisible there.
         """
         offset = self.i(row, col)
         if offset < 0 or offset >= len(self._strings):

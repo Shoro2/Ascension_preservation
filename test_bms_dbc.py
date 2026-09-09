@@ -58,6 +58,21 @@ class StringBlockTests(DbcFixtureMixin, unittest.TestCase):
         self.assertEqual(dbc.s(0, 0), "Fire")
         self.assertEqual(dbc.s(1, 0), "Frost")
 
+    def test_rows_sharing_a_name_share_one_offset(self):
+        """String blocks deduplicate, so "one row per file" is not the rule.
+
+        Every row whose name equals the block's first string reads at offset 0.
+        Measured on Ascension's Achievement.dbc: ids 3 and 5610 are both
+        "Son of a...", and both were blanked by the old special case.
+        """
+        strings = b"Son of a...\x00Level 10\x00"
+        path = self.build("Achievement.dbc", [(0,), (12,), (0,)], strings)
+        dbc = DBC(path)
+        self.assertEqual(
+            [dbc.s(row, 0) for row in range(3)],
+            ["Son of a...", "Level 10", "Son of a..."],
+        )
+
     def test_stock_layout_still_reads_offset_zero_as_empty(self):
         """The fix must not change stock behaviour.
 
