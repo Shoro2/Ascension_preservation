@@ -91,10 +91,21 @@ print(max(ids), sum(1 for i in ids if i > 65535))
 ```
 
 The DBC set in this archive reports `13470 0` — max id 13,470 across 7,655
-criteria, nothing above the ceiling — so the columns are safe here as they
-stand, and the widening below is **not** needed for this archive. It becomes
-necessary only if you merge in a CoA achievement set that pushes ids past
-65535.
+criteria, nothing above the ceiling.
+
+**But read that result narrowly.** The DBC bounds only what *the core* writes
+for achievements earned on this server, which is the `CMSG_CHAR_CREATE` path
+described above. It says nothing about ids arriving from anywhere else. Any
+tool that writes `character_achievement` rows from **externally captured
+character data** — a save/restore importer, a migration off a live realm — is
+carrying ids from that service's DBC set, not yours, and is exposed no matter
+what your own DBCs say. Non-strict MySQL (`sql_mode` without `STRICT_*`, which
+is the AzerothCore default) clamps rather than errors, so the failure is
+silent.
+
+So: safe for character creation here; **not** a blanket all-clear for the
+database. Widen the columns before running any importer of external character
+data, and check `SELECT @@SESSION.sql_mode` while you are at it.
 
 ```sql
 -- widen if your Achievement_Criteria.dbc carries ids > 65535
@@ -116,3 +127,32 @@ SELECT TABLE_NAME, COLUMN_NAME, COLUMN_TYPE
 
 After any manual character-table surgery, purge orphaned `character_*` rows —
 reused GUIDs collide with leftover sub-table rows.
+
+---
+
+## 4. The general form: non-strict MySQL never tells you it lost your data
+
+Issue 3 is one instance of a class worth stating on its own, because AzerothCore
+ships `sql_mode` without `STRICT_TRANS_TABLES`:
+
+- an integer wider than its column is **clamped to the column maximum**
+- a string longer than its column is **truncated**
+
+Both succeed. No error, no exception, no log line. You find out later, as a
+primary-key collision, a mismatched lookup, or a value that is quietly wrong.
+
+The narrow columns are not exotic — a stock `item_template` alone has dozens of
+sub-`INT` columns. Any code path that writes an id it did not itself generate
+(client-supplied, imported, or scraped from another realm's data) should check
+that the value fits **before** writing, and name the column and the limit when
+it does not. `information_schema.COLUMNS` has what you need, with one catch
+worth knowing: the unsigned flag appears only in `COLUMN_TYPE`, never in
+`DATA_TYPE`, so a range check built on `DATA_TYPE` alone silently gets the
+bounds wrong.
+
+Check your mode first — if it comes back with `STRICT_TRANS_TABLES`, none of
+this applies and you get a real error instead:
+
+```sql
+SELECT @@SESSION.sql_mode;
+```

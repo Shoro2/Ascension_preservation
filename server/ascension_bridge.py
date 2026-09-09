@@ -633,6 +633,21 @@ def stage_session_key(account, key40):
                     (account, bytes(32), bytes(32), key40))
                 cur.execute("SELECT id FROM account WHERE username = %s", (account,))
                 row = cur.fetchone()
+                if row is None:
+                    # The INSERT reported success but the name does not read
+                    # back, so what MySQL stored is not what we sent.  With
+                    # AzerothCore's default sql_mode (no STRICT_TRANS_TABLES)
+                    # an over-long string is TRUNCATED silently rather than
+                    # rejected, and `username` is varchar(32).  Without this
+                    # check the next line is row[0] on None, and the resulting
+                    # "'NoneType' is not subscriptable" says nothing about the
+                    # real cause.  Name it instead.  See docs/KNOWN-ISSUES.md
+                    # section 4 for the general form of this trap.
+                    raise RuntimeError(
+                        "account %r did not read back after INSERT -- almost "
+                        "certainly truncated to fit account.username "
+                        "varchar(32) (len was %d) under a non-strict sql_mode"
+                        % (account, len(account)))
                 log("    created asc_auth account %r (id %s)" % (account, row[0]))
             # `os` is not cosmetic: with Warden enabled the core rejects the
             # session outright (AUTH_REJECT, "invalid client OS ()") if the
