@@ -72,6 +72,8 @@ data/            CoA CONTENT derived from the client (schema + exports)
 tools/           Reverse-engineering + analysis toolkit (~60 scripts)
 reference/       Curated screenshots + Lua/opcode reference text
 area-52/         Area-52 "Free-Pick" realm-flavour specifics (see its README)
+contrib/         Tools contributed by others, adapted (see each README)
+  AscensionRedirect/            WinDivert packet redirect + Frida auth-send probe
 ```
 
 ## Requirements

@@ -1,0 +1,2 @@
+pydivert>=2.1.0
+frida>=16.0.0
