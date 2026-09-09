@@ -40,6 +40,7 @@ __all__ = [
     "Resolvers",
     "Resolution",
     "class_mask",
+    "dbc_header",
     "race_mask",
 ]
 
@@ -98,6 +99,25 @@ def race_mask(race_id: int) -> int:
 
 def class_mask(class_id: int) -> int:
     return 1 << (int(class_id) - 1)
+
+
+def dbc_header(path: str) -> tuple[int, int] | None:
+    """(record count, field count) from a DBC's 20-byte header, or None.
+
+    Header-only on purpose: Spell.dbc is around 90 MB, and this exists so that
+    every run can afford to print which DBC set it used. Two directories that
+    both contain the right file names are not the same data, and nothing else
+    in the output would have shown the difference.
+    """
+    try:
+        with open(path, "rb") as handle:
+            head = handle.read(20)
+    except OSError:
+        return None
+    if len(head) < 20 or head[:4] != b"WDBC":
+        return None
+    count, fields = struct.unpack_from("<II", head, 4)
+    return count, fields
 
 
 class DBC:
@@ -234,6 +254,20 @@ class Resolvers:
             "GlyphProperties.dbc",
         ]
         return {n: os.path.isfile(os.path.join(self.dbc_dir, n)) for n in wanted}
+
+    def fingerprint(self) -> str:
+        """A one-line description of WHICH DBC set this is, not just where.
+
+        Row counts are the cheapest thing that tells two sets apart, and telling
+        them apart is the whole point: a fork's Talent.dbc and the stock one
+        both load, both resolve most names, and disagree about exactly the
+        talents that then go missing from the imported character.
+        """
+        parts = []
+        for name in ("Talent.dbc", "Spell.dbc"):
+            header = dbc_header(os.path.join(self.dbc_dir, name))
+            parts.append("%s %s" % (name, "%d rows" % header[0] if header else "unreadable"))
+        return ", ".join(parts)
 
     # -- factions ---------------------------------------------------------
 

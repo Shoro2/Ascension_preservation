@@ -24,10 +24,15 @@ rendering intended for display. Nothing in this module writes to disk.
 from __future__ import annotations
 
 import os
+import shlex
+import subprocess
 from dataclasses import dataclass, field
 
 MAX_CONFIG_BYTES = 4 * 1024 * 1024   # a server conf is ~40 KB; this is a sanity bound
 DSN_FIELDS = 5                       # host;port;user;password;database
+
+PROCESS_TIMEOUT = 20                 # a process listing that hangs must not hang us
+CONFIG_FLAGS = ("-c", "-config", "--config")
 
 WORLD_KEY = "WorldDatabaseInfo"
 LOGIN_KEY = "LoginDatabaseInfo"
@@ -320,6 +325,125 @@ def find_config(start: str | None = None) -> str | None:
     """The first server config we can actually find, or None."""
     found = find_all_configs(start)
     return found[0] if found else None
+
+
+# -- asking the running server itself --------------------------------------
+#
+# Discovery above works by name and by convention, and that is a guess. A
+# worldserver that is actually running holds its own config open and names it on
+# its command line, so when the two disagree the process is right. This matters
+# more than it sounds: a config from the realm next door usually has the same
+# database settings but a different DataDir, so the import writes to the correct
+# schema while resolving talents and spells against the wrong DBCs -- which
+# looks like a clean run and quietly drops what it could not resolve.
+
+def _command_output(argv: list[str]) -> str:
+    """Run a process listing, or return "" if it is unavailable, slow or noisy."""
+    try:
+        done = subprocess.run(argv, capture_output=True, text=True,
+                              timeout=PROCESS_TIMEOUT)
+    except Exception:
+        return ""
+    return done.stdout or ""
+
+
+def worldserver_command_lines() -> list[str]:
+    """The full command line of every worldserver running on this machine."""
+    lines: list[str] = []
+    if os.name == "nt":
+        # wmic is the fast path and is present on Windows 10; the CIM query is
+        # the replacement on builds where wmic has been removed.
+        text = _command_output(["wmic", "process", "where",
+                                "name='worldserver.exe'", "get", "CommandLine",
+                                "/format:list"])
+        for line in text.splitlines():
+            key, sep, value = line.partition("=")
+            if sep and key.strip() == "CommandLine" and value.strip():
+                lines.append(value.strip())
+        if not lines:
+            text = _command_output(
+                ["powershell", "-NoProfile", "-NonInteractive", "-Command",
+                 "Get-CimInstance Win32_Process -Filter \"Name='worldserver.exe'\" "
+                 "| ForEach-Object { $_.CommandLine }"])
+            lines.extend(line.strip() for line in text.splitlines() if line.strip())
+    else:
+        text = _command_output(["ps", "-eo", "args="])
+        for line in text.splitlines():
+            stripped = line.strip()
+            if not stripped:
+                continue
+            # Match on the executable only. A grep over the whole line would
+            # match any process that merely mentions a worldserver path.
+            first = stripped.split(None, 1)[0]
+            if os.path.basename(first).startswith("worldserver"):
+                lines.append(stripped)
+    return lines
+
+
+def config_from_command_line(command_line: str) -> str | None:
+    """The path given to `-c` / `--config`, or None if there was not one.
+
+    Split with posix=False because a Windows command line is full of
+    backslashes, and posix mode would eat them as escapes.
+    """
+    try:
+        tokens = [_unquote(t) for t in shlex.split(command_line, posix=False)]
+    except ValueError:
+        return None
+    for index, token in enumerate(tokens):
+        flag, sep, joined = token.partition("=")
+        if flag not in CONFIG_FLAGS:
+            continue
+        value = joined if sep else (tokens[index + 1] if index + 1 < len(tokens) else "")
+        if value:
+            return value
+    return None
+
+
+def running_servers() -> list[tuple[str, ServerConfig | None]]:
+    """Every running worldserver as (command line, its config or None).
+
+    Best effort throughout: a machine where the process listing is unavailable,
+    or a server started with a relative config path we cannot resolve, yields
+    nothing rather than an error. The unparsed ones are kept in the list with a
+    None config on purpose -- a caller deciding whether a realm is safe to write
+    to needs to know that a server is running even when we cannot say which.
+    """
+    servers: list[tuple[str, ServerConfig | None]] = []
+    seen: set[str] = set()
+    for line in worldserver_command_lines():
+        config = None
+        path = config_from_command_line(line)
+        if path:
+            path = os.path.abspath(path)
+            key = os.path.normcase(path)
+            if key in seen:
+                continue
+            seen.add(key)
+            if os.path.isfile(path):
+                try:
+                    config = read_config(path)
+                except ConfigError:
+                    config = None
+        servers.append((line, config))
+    return servers
+
+
+def running_server_configs() -> list[ServerConfig]:
+    """Just the configs, for callers that only care about the readable ones."""
+    return [config for _line, config in running_servers() if config is not None]
+
+
+def serves_database(config: ServerConfig, database: str) -> bool:
+    """Is this config's realm the one that owns `database`?
+
+    Compared on the schema name alone. Several realms sharing one MySQL are
+    told apart by schema (`acore_characters` vs `asc_characters`), while the
+    host is written a different way in every config that reaches it.
+    """
+    if config.characters is None or not database:
+        return False
+    return config.characters.database.lower() == database.lower()
 
 
 def load(path: str | None = None, start: str | None = None) -> ServerConfig:

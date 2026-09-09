@@ -32,6 +32,11 @@ python bms_import.py mycharacter.bmsr.zip --account MYACCOUNT --apply
 Start the realm, log in, and the character is there. The client will prompt you
 to rename and to pick an appearance.
 
+Run the preview *before* you stop the realm. A dry run writes nothing, and
+while the realm is still up the importer can ask the running worldserver which
+config it is using — which is the only way to be certain it is reading the same
+data your server does.
+
 ### If it cannot find your config
 
 On a machine hosting more than one realm it will refuse to guess:
@@ -49,6 +54,38 @@ So point it at the right one:
 python bms_import.py mycharacter.bmsr.zip --account MYACCOUNT \
     --config /azerothcore/etc/worldserver.conf
 ```
+
+### Which config, and which DBCs
+
+Auto-discovery works by name and by convention: `worldserver.conf`, in or near
+a `configs/` directory. A realm started with `-c /somewhere/else/my-realm.conf`
+is invisible to it, and if a *different* realm's `worldserver.conf` is sitting
+where discovery does look, that is the one it finds.
+
+That matters more than a wrong filename usually would. Realms on one machine
+tend to share database settings while keeping separate `DataDir`s, so the wrong
+config sends every write to the right schema and every *name lookup* — talents,
+spells, skills, factions — to the wrong `Data/dbc`. The run looks clean; what
+did not resolve is reported as skipped rather than as wrong.
+
+So while a worldserver is running, the importer reads its command line:
+
+- it uses that config when discovery finds none, or cannot choose between
+  several — reported as `(running server)`;
+- and if the realm that owns your target database is running on a **different**
+  `Data/dbc` than the run is about to read, that is a `FAIL`, with the
+  `--config` to re-run with.
+
+Every run prints the directory it read and its row counts, so two runs can be
+compared:
+
+```
+[ ok ] DBC resolvers      /azerothcore/data/dbc (Talent.dbc 892 rows, Spell.dbc 49839 rows)
+```
+
+The realm has to be stopped for `--apply`, so at that point there is no process
+left to ask. When the config came from a running server the preview says so and
+gives you the `--config` to repeat it with; pass it.
 
 ---
 
@@ -116,6 +153,15 @@ The importer is built to be hard to misuse.
   want it.) A dry run still works with the realm up, so you can see exactly what
   the import would do before you take anyone offline.
 - **It will not guess between realms.** See above.
+- **It checks that it is reading your realm's own DBCs.** A neighbouring
+  realm's `worldserver.conf` usually carries the same database settings and a
+  different `DataDir`, which is a wrong answer that looks like a right one. On
+  the realm this was built against, the same checkpoint plans 24 spells and 7
+  talents against the right `Data/dbc` and 17 spells and 0 talents against the
+  one auto-discovery found — with the seven missing talents reported as
+  *ambiguous, skipped* rather than as an error. While the realm is up the
+  importer asks the running worldserver which config it is using, and fails if
+  the answer disagrees.
 - **Every planned value is measured against the column it is bound for.** Forks
   outgrow their own schema, and the schema does not complain. On the Ascension
   realm this was built against, `Achievement.dbc` holds 22,603 rows reaching id
@@ -204,10 +250,11 @@ other processes on the machine.
 `--no-config` disables config discovery entirely if you would rather be
 explicit.
 
-Every run prints where each setting came from:
+Every run prints where each setting came from, and where the config itself came
+from — `discovered`, `--config`, or `running server`:
 
 ```
-CONFIG  /azerothcore/etc/worldserver.conf
+CONFIG  /azerothcore/etc/worldserver.conf (discovered)
   host           127.0.0.1                     config
   characters_db  acore_characters              config
   dbc_dir        /azerothcore/data/dbc         config

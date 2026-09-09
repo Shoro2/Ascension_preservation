@@ -15,6 +15,7 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import bms_config  # noqa: E402
 from bms_import import (  # noqa: E402
     EQUIPMENT_CACHE_MAX,
     EQUIPMENT_CACHE_SIZE,
@@ -28,7 +29,9 @@ from bms_import import (  # noqa: E402
     _equipment_cache,
     blocks_planning,
     blocks_writing,
+    choose_config,
     column_limits,
+    dbc_conflict,
     equipment_cache_width,
     resolve_settings,
     value_fits,
@@ -216,6 +219,12 @@ DataDir = "{data}"
                          "BMS_CHARACTERS_DB", "BMS_WORLD_DB", "BMS_DBC_DIR",
                          "BMS_DB_PASSWORD", "BMS_SERVER_CONFIG"):
             os.environ.pop(variable, None)
+        # These tests are about resolution order, not about whatever happens to
+        # be running on the machine running them. RunningServerTests covers the
+        # process scan deliberately.
+        real = bms_config.running_servers
+        bms_config.running_servers = lambda: []
+        self.addCleanup(setattr, bms_config, "running_servers", real)
 
     def args(self, **overrides):
         base = dict(config=self.conf, no_config=False, host=None, port=None,
@@ -485,6 +494,151 @@ class ColumnFitTests(unittest.TestCase):
         """The 11xxxxx ids this fork uses are fine; only the narrow columns bite."""
         self.assertTrue(value_fits(column("int", "int(10) unsigned"), 1111078))
         self.assertFalse(value_fits(column("smallint", "smallint(5) unsigned"), 1111078))
+
+
+class RunningServerTests(unittest.TestCase):
+    """The running worldserver decides which config is the right one.
+
+    This is the defect these tests exist for: auto-discovery found a
+    `worldserver.conf` belonging to the realm next door. It had the same three
+    database DSNs, so every write landed in the right schema and the run looked
+    clean -- but its DataDir pointed at a different `Data/dbc`, so talents and
+    spells were resolved against data this realm does not have. Seven talents
+    and seven spells were reported as "skipped: ambiguous" and simply left out.
+    """
+
+    CONF = """
+LoginDatabaseInfo     = "127.0.0.1;3306;u;p;{prefix}_auth"
+WorldDatabaseInfo     = "127.0.0.1;3306;u;p;{prefix}_world"
+CharacterDatabaseInfo = "127.0.0.1;3306;u;p;{prefix}_characters"
+DataDir = "{data}"
+"""
+
+    def setUp(self):
+        self.root = tempfile.mkdtemp(prefix="bms-running-")
+        self.addCleanup(shutil.rmtree, self.root, ignore_errors=True)
+
+    def config(self, name, prefix="asc", data="Data"):
+        """A server config where discovery expects one, with its own Data/dbc."""
+        home = os.path.join(self.root, name)
+        os.makedirs(os.path.join(home, data, "dbc"), exist_ok=True)
+        os.makedirs(os.path.join(home, "configs"), exist_ok=True)
+        path = os.path.join(home, "configs", "worldserver.conf")
+        with open(path, "w", encoding="utf-8") as handle:
+            handle.write(self.CONF.format(
+                prefix=prefix,
+                data=os.path.join(home, data).replace("\\", "/")))
+        return bms_config.read_config(path)
+
+    def args(self, **overrides):
+        base = dict(config=None, no_config=False)
+        base.update(overrides)
+        return argparse.Namespace(**base)
+
+    # -- picking a config -------------------------------------------------
+
+    def test_a_running_server_breaks_a_tie_discovery_will_not(self):
+        """Two realms side by side is a refusal; one of them running is an answer."""
+        for name in ("realm-a", "realm-b"):
+            self.config(name)
+        running = self.config("realm-a")
+        chosen, origin = choose_config(self.args(), self.root, [running])
+        self.assertEqual(chosen.path, running.path)
+        self.assertEqual(origin, "running server")
+
+    def test_two_running_servers_are_still_a_refusal(self):
+        """A tie broken by a coin flip is the thing this tool must never do."""
+        running = [self.config(name) for name in ("realm-a", "realm-b")]
+        with self.assertRaises(Exception) as caught:
+            choose_config(self.args(), self.root, running)
+        self.assertIn("--config", str(caught.exception))
+
+    def test_a_running_server_is_found_when_discovery_finds_nothing(self):
+        """A config named something else, or kept outside configs/, is invisible."""
+        running = self.config("odd-layout")
+        empty = tempfile.mkdtemp(prefix="bms-empty-")
+        self.addCleanup(shutil.rmtree, empty, ignore_errors=True)
+        chosen, origin = choose_config(self.args(), empty, [running])
+        self.assertEqual(chosen.path, running.path)
+        self.assertEqual(origin, "running server")
+
+    def test_an_explicit_config_is_never_overruled(self):
+        """--config is the user saying which realm they mean. It wins."""
+        mine = self.config("mine")
+        running = self.config("theirs")
+        chosen, origin = choose_config(self.args(config=mine.path), self.root, [running])
+        self.assertEqual(chosen.path, mine.path)
+        self.assertEqual(origin, "--config")
+
+    # -- catching the wrong one -------------------------------------------
+
+    def test_the_same_database_from_a_different_dbc_set_is_a_conflict(self):
+        """The exact defect: right schema, wrong DataDir, no complaint."""
+        chosen = self.config("neighbour", prefix="asc")
+        running = self.config("live", prefix="asc")
+        self.assertNotEqual(chosen.dbc_dir, running.dbc_dir)
+        found = dbc_conflict("asc_characters", chosen.dbc_dir, [running])
+        self.assertIsNotNone(found)
+        self.assertEqual(found.path, running.path)
+
+    def test_a_different_realm_running_is_not_a_conflict(self):
+        """Machines host several realms; the other ones are none of our business."""
+        chosen = self.config("ours", prefix="asc")
+        running = self.config("theirs", prefix="acore")
+        self.assertIsNone(dbc_conflict("asc_characters", chosen.dbc_dir, [running]))
+
+    def test_pointing_dbc_dir_at_the_right_data_settles_it(self):
+        """The check is on what will be read, not on where the setting came from."""
+        running = self.config("live", prefix="asc")
+        self.assertIsNone(dbc_conflict("asc_characters", running.dbc_dir, [running]))
+
+    def test_the_same_directory_written_differently_is_not_a_conflict(self):
+        """A user-typed --dbc-dir uses whatever slashes and case they felt like."""
+        running = self.config("live", prefix="asc")
+        typed = running.dbc_dir.replace("\\", "/").upper()
+        self.assertIsNone(dbc_conflict("asc_characters", typed, [running]))
+
+    def test_the_same_dbc_set_under_another_name_is_not_a_conflict(self):
+        """Only a difference that changes the import is worth stopping for."""
+        chosen = self.config("realm", prefix="asc")
+        copy = os.path.join(self.root, "realm", "configs", "worldserver-bridge.conf")
+        shutil.copy(chosen.path, copy)
+        self.assertIsNone(dbc_conflict("asc_characters", chosen.dbc_dir,
+                                       [bms_config.read_config(copy)]))
+
+    def test_nothing_running_means_nothing_can_be_said(self):
+        """With the realm stopped for --apply there is no process to ask."""
+        self.assertIsNone(dbc_conflict("asc_characters", self.config("realm").dbc_dir, []))
+
+    # -- reading a command line -------------------------------------------
+
+    def test_a_windows_command_line_keeps_its_backslashes(self):
+        """posix=True splitting would eat every one of them as an escape."""
+        line = ('"C:\\AzerothRealm\\server-ascension\\worldserver.exe" '
+                '-c "C:\\AzerothRealm\\realms\\ascension\\worldserver-bridge.conf"')
+        self.assertEqual(bms_config.config_from_command_line(line),
+                         "C:\\AzerothRealm\\realms\\ascension\\worldserver-bridge.conf")
+
+    def test_the_config_flag_is_read_in_each_spelling(self):
+        for flag in ("-c", "--config", "-config"):
+            self.assertEqual(
+                bms_config.config_from_command_line("worldserver %s /etc/w.conf" % flag),
+                "/etc/w.conf", flag)
+        self.assertEqual(
+            bms_config.config_from_command_line("worldserver --config=/etc/w.conf"),
+            "/etc/w.conf")
+
+    def test_a_server_started_with_no_config_flag_yields_nothing(self):
+        self.assertIsNone(bms_config.config_from_command_line("worldserver.exe"))
+        self.assertIsNone(bms_config.config_from_command_line("worldserver.exe -c"))
+
+    def test_a_realm_is_identified_by_its_character_schema(self):
+        """Host is written a different way in every config that reaches it."""
+        asc = self.config("a", prefix="asc")
+        self.assertTrue(bms_config.serves_database(asc, "asc_characters"))
+        self.assertTrue(bms_config.serves_database(asc, "ASC_CHARACTERS"))
+        self.assertFalse(bms_config.serves_database(asc, "acore_characters"))
+        self.assertFalse(bms_config.serves_database(asc, ""))
 
 
 if __name__ == "__main__":

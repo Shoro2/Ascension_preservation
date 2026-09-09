@@ -39,7 +39,6 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import subprocess
 import sys
 import time
 from dataclasses import dataclass, field
@@ -289,9 +288,21 @@ def insert(conn, schema: str, table: str, row: dict[str, Any]) -> None:
 
 # -- pre-flight ------------------------------------------------------------
 
-def realm_looks_live(conn, characters_db: str) -> tuple[bool, str]:
-    """Two independent signals that a worldserver is attached to this DB."""
+def realm_looks_live(conn, characters_db: str,
+                     running: list[tuple[str, Any]] | None = None) -> tuple[bool, str]:
+    """Two independent signals that a worldserver is attached to THIS database.
+
+    Reading each running server's own config is what makes this specific. A
+    machine hosting several realms always has a worldserver running somewhere,
+    and treating that as "the realm is up" would mean every import demands that
+    every unrelated realm be stopped. A server whose config names a different
+    character schema is reported and then set aside; anything we could not read
+    counts against us, because an unidentified worldserver might be this one.
+    """
+    if running is None:
+        running = bms_config.running_servers()
     reasons = []
+    aside = []
     try:
         online = scalar(
             conn, "SELECT COUNT(*) FROM `%s`.characters WHERE online <> 0" % characters_db, (), 0
@@ -300,24 +311,18 @@ def realm_looks_live(conn, characters_db: str) -> tuple[bool, str]:
             reasons.append(f"{online} character(s) flagged online in {characters_db}")
     except Exception:
         pass
-    try:
-        found = subprocess.run(
-            ["tasklist", "/FI", "IMAGENAME eq worldserver.exe", "/NH"],
-            capture_output=True,
-            text=True,
-            timeout=15,
-        ).stdout
-        if "worldserver.exe" in found.lower():
-            reasons.append("worldserver.exe is running on this machine")
-    except Exception:
-        try:
-            found = subprocess.run(
-                ["pgrep", "-a", "worldserver"], capture_output=True, text=True, timeout=15
-            ).stdout
-            if found.strip():
-                reasons.append("a worldserver process is running on this machine")
-        except Exception:
-            pass
+    for _line, config in running:
+        if config is None:
+            reasons.append("a worldserver is running and did not name a config we could "
+                           "read, so it may be this realm")
+        elif bms_config.serves_database(config, characters_db):
+            reasons.append("a worldserver is running on %s (%s)"
+                           % (characters_db, config.path))
+        else:
+            aside.append(config.characters.database if config.characters else config.path)
+    if not reasons and aside:
+        return False, "worldservers running, but on %s, not %s" % (", ".join(aside),
+                                                                   characters_db)
     return bool(reasons), "; ".join(reasons)
 
 
@@ -327,7 +332,8 @@ def preflight(conn, args: argparse.Namespace, checkpoint, resolvers: Resolvers |
     char = checkpoint.character
 
     # 1. realm must be stopped
-    live, why = realm_looks_live(conn, args.characters_db)
+    live, why = realm_looks_live(conn, args.characters_db,
+                                 getattr(args, "running_servers", None))
     if live and not args.allow_online:
         checks.append(Check(
             "realm stopped", FAIL,
@@ -339,7 +345,7 @@ def preflight(conn, args: argparse.Namespace, checkpoint, resolvers: Resolvers |
     elif live:
         checks.append(Check("realm stopped", WARN, f"{why} -- overridden with --allow-online."))
     else:
-        checks.append(Check("realm stopped", OK, "no worldserver detected"))
+        checks.append(Check("realm stopped", OK, why or "no worldserver detected"))
 
     # 2. schemas exist
     for label, schema in (("auth", args.auth_db), ("characters", args.characters_db),
@@ -440,9 +446,26 @@ def preflight(conn, args: argparse.Namespace, checkpoint, resolvers: Resolvers |
                             f"--dbc-dir {args.dbc_dir!r} is not usable"))
     else:
         missing = [n for n, present in resolvers.available().items() if not present]
+        # The directory and its row counts go in the detail whether or not
+        # anything is wrong: which DBC set was read is the single fact this
+        # report used to omit, and the one that made a wrong run look right.
+        where = "%s (%s)" % (resolvers.dbc_dir, resolvers.fingerprint())
         checks.append(Check("DBC resolvers", WARN if missing else OK,
-                            "missing: " + ", ".join(missing) if missing
-                            else "Faction, SkillLine, Talent, TalentTab, Spell, GlyphProperties"))
+                            "missing: %s -- %s" % (", ".join(missing), where) if missing
+                            else where))
+
+    # 9. is a worldserver on this database running a different DBC set?
+    conflict = getattr(args, "config_conflict", None)
+    if conflict is not None:
+        checks.append(Check(
+            "DBC set", FAIL,
+            "the worldserver running on %s (%s) reads its DBCs from %s, but this run is "
+            "reading %s. Those are different data, so talents, spells, skills and "
+            "factions would be resolved against files this realm does not use -- and "
+            "whatever failed to resolve would be reported as skipped rather than as "
+            "wrong. Re-run with --config \"%s\", or --dbc-dir \"%s\" if you mean it."
+            % (args.characters_db, conflict.path, conflict.dbc_dir, args.dbc_dir,
+               conflict.path, conflict.dbc_dir)))
 
     return checks
 
@@ -1250,7 +1273,8 @@ def render(args: argparse.Namespace, checkpoint, checks: list[Check], plan: Plan
     return "\n".join(lines)
 
 
-def report_json(checkpoint, checks: list[Check], plan: Plan | None) -> dict[str, Any]:
+def report_json(checkpoint, checks: list[Check], plan: Plan | None,
+                args: argparse.Namespace | None = None) -> dict[str, Any]:
     data: dict[str, Any] = {
         "character": {
             key: checkpoint.character.get(key)
@@ -1259,6 +1283,16 @@ def report_json(checkpoint, checks: list[Check], plan: Plan | None) -> dict[str,
         "sealedAt": checkpoint.sealed_at,
         "checks": [{"name": c.name, "status": c.status, "detail": c.detail} for c in checks],
     }
+    if args is not None:
+        # Which config and which DBC set produced this plan. Two reports of the
+        # same character are only comparable if you can see they were built
+        # from the same data.
+        data["source"] = {
+            "config": getattr(args, "config_path", None),
+            "configOrigin": getattr(args, "config_origin", None),
+            "dbcDir": args.dbc_dir or None,
+            "charactersDb": args.characters_db,
+        }
     if plan is not None:
         data["plan"] = {
             "guid": plan.guid,
@@ -1342,8 +1376,72 @@ SETTINGS = (
 )
 
 
+def choose_config(args: argparse.Namespace, start: str | None,
+                  running: list[bms_config.ServerConfig],
+                  ) -> tuple[bms_config.ServerConfig | None, str]:
+    """Decide which server config to believe, and say where it came from.
+
+    A running worldserver names its own config on its command line, which makes
+    it the only unambiguous answer available. It is used here to break a
+    discovery tie that would otherwise stop the run, and in `dbc_conflict` to
+    catch the worse case: reading the DBCs of a realm other than the one being
+    imported into.
+    """
+    if args.config:
+        return bms_config.read_config(args.config), "--config"
+    if args.no_config:
+        return None, "not read"
+
+    found = bms_config.find_all_configs(start)
+    if len(found) == 1:
+        return bms_config.read_config(found[0]), "discovered"
+    if len(found) > 1:
+        # Discovery works by name and by convention, so several realms on one
+        # machine look identical to it. A single running server settles it.
+        if len(running) == 1:
+            return running[0], "running server"
+        raise ImportError_(
+            "Found %d server configs and will not guess between them:\n  %s\n"
+            "Pass --config with the one you mean." % (len(found), "\n  ".join(found)))
+    if len(running) == 1:
+        return running[0], "running server"
+    return None, "not found"
+
+
+def _same_dir(a: str | None, b: str | None) -> bool:
+    if not a or not b:
+        return False
+    return os.path.normcase(os.path.abspath(a)) == os.path.normcase(os.path.abspath(b))
+
+
+def dbc_conflict(characters_db: str, dbc_dir: str | None,
+                 running: list[bms_config.ServerConfig],
+                 ) -> bms_config.ServerConfig | None:
+    """A worldserver running on our target database, from a different DBC set.
+
+    The comparison is against the directory this run will actually read, not
+    against the config it came from, so pointing `--dbc-dir` at the right data
+    settles the question however the rest of the settings were arrived at.
+
+    Only the DBC directory is compared. Two configs for one realm that disagree
+    about nothing that matters here -- a copy under another name, a `.dist`
+    beside the real thing -- are not worth stopping for. A different `DataDir`
+    is, because every talent, spell, skill and faction name in the checkpoint is
+    resolved through it.
+    """
+    if not dbc_dir:
+        return None
+    for other in running:
+        if (bms_config.serves_database(other, characters_db)
+                and not _same_dir(other.dbc_dir, dbc_dir)):
+            return other
+    return None
+
+
 def resolve_settings(args: argparse.Namespace,
-                     start: str | None = None) -> list[tuple[str, str, str]]:
+                     start: str | None = None,
+                     running: list[bms_config.ServerConfig] | None = None,
+                     ) -> list[tuple[str, str, str]]:
     """Fill in whatever the user did not spell out, and say where it came from.
 
     Order of authority is flag, then environment, then server config, then the
@@ -1352,20 +1450,18 @@ def resolve_settings(args: argparse.Namespace,
     flags into none -- which is the difference between this being usable by
     someone who did not write it and not.
 
+    `running` is the list of configs belonging to worldservers running right
+    now; pass `[]` to skip the process scan entirely.
+
     Returns display rows of (setting, value, origin). Passwords never appear.
     """
-    config = None
+    if running is None:
+        running = bms_config.running_server_configs()
+
     args.config_path = None
-    if args.config:
-        config = bms_config.read_config(args.config)
-    elif not args.no_config:
-        found = bms_config.find_all_configs(start)
-        if len(found) > 1:
-            raise ImportError_(
-                "Found %d server configs and will not guess between them:\n  %s\n"
-                "Pass --config with the one you mean." % (len(found), "\n  ".join(found)))
-        if found:
-            config = bms_config.read_config(found[0])
+    args.config_origin = "not read"
+    args.config_conflict = None
+    config, args.config_origin = choose_config(args, start, running)
     if config is not None:
         args.config_path = config.path
 
@@ -1402,6 +1498,10 @@ def resolve_settings(args: argparse.Namespace,
             setattr(args, attribute, fallback)
             origin = "default"
         rows.append((attribute, str(getattr(args, attribute)), origin))
+
+    # Now that the DBC directory is settled, whatever settled it, ask whether
+    # the realm that owns this database is running on a different one.
+    args.config_conflict = dbc_conflict(args.characters_db, args.dbc_dir, running)
 
     # The password follows the same order, but is never shown or written down.
     if args.password is not None:
@@ -1484,17 +1584,28 @@ def main(argv: list[str]) -> int:
             print("\nPick one with --index N.")
         return 0
 
+    # One process scan, shared: which config each running worldserver uses
+    # settles both "is the realm I am writing to up?" and "am I about to read
+    # the DBCs of a different realm?".
+    args.running_servers = bms_config.running_servers()
     try:
-        settings = resolve_settings(args)
+        settings = resolve_settings(
+            args, running=[c for _line, c in args.running_servers if c is not None])
     except (ImportError_, bms_config.ConfigError) as exc:
         print("error: %s" % exc, file=sys.stderr)
         return 2
 
     if args.config_path:
-        print("CONFIG  %s" % args.config_path)
+        print("CONFIG  %s (%s)" % (args.config_path, args.config_origin))
         for name, value, origin in settings:
             print("  %-14s %-44s %s" % (name, value or "(unset)", origin))
         print("  %-14s %-44s %s" % ("password", "<hidden>", args.password_origin))
+        if args.config_origin == "running server":
+            # Discovery could not have found this one, and it will not find it
+            # again once the realm is stopped for --apply.
+            print("\n  This config came from the running worldserver, not from "
+                  "auto-discovery.\n  Pass --config \"%s\" when you re-run with the "
+                  "realm stopped." % args.config_path)
         print()
 
     if not args.account:
@@ -1541,7 +1652,7 @@ def main(argv: list[str]) -> int:
 
         if args.json:
             with open(args.json, "w", encoding="utf-8") as handle:
-                json.dump(report_json(checkpoint, checks, plan), handle, indent=2)
+                json.dump(report_json(checkpoint, checks, plan, args), handle, indent=2)
             print("\nReport written to %s" % args.json)
 
         if blocked or plan is None:
