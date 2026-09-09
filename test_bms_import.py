@@ -28,8 +28,10 @@ from bms_import import (  # noqa: E402
     _equipment_cache,
     blocks_planning,
     blocks_writing,
+    column_limits,
     equipment_cache_width,
     resolve_settings,
+    value_fits,
 )
 
 
@@ -409,6 +411,80 @@ class GatingTests(unittest.TestCase):
     def test_no_checks_at_all_blocks_nothing(self):
         self.assertFalse(blocks_planning([]))
         self.assertEqual(blocks_writing([]), [])
+
+
+def column(data_type, column_type=None, length=None):
+    """One information_schema row, shaped like table_columns() returns."""
+    return {
+        "DATA_TYPE": data_type,
+        "COLUMN_TYPE": column_type if column_type is not None else data_type,
+        "CHARACTER_MAXIMUM_LENGTH": length,
+    }
+
+
+class ColumnFitTests(unittest.TestCase):
+    """A value that does not fit its column must be caught before the write.
+
+    MySQL without STRICT in sql_mode clamps an out-of-range integer to the column
+    maximum rather than refusing it. Two ids that clamp to the same ceiling then
+    collide on the primary key and roll the whole transaction back, which reads
+    as "the import silently did nothing".
+    """
+
+    def test_signed_limits(self):
+        self.assertEqual(column_limits(column("tinyint")), (-128, 127))
+        self.assertEqual(column_limits(column("smallint")), (-32768, 32767))
+        self.assertEqual(column_limits(column("mediumint")), (-8388608, 8388607))
+        self.assertEqual(column_limits(column("int")), (-2147483648, 2147483647))
+
+    def test_unsigned_limits_come_from_column_type_not_data_type(self):
+        """information_schema puts the signedness in COLUMN_TYPE only."""
+        self.assertEqual(
+            column_limits(column("smallint", "smallint(5) unsigned")), (0, 65535))
+        self.assertEqual(
+            column_limits(column("int", "int(10) unsigned")), (0, 4294967295))
+
+    def test_non_integer_columns_have_no_limits(self):
+        self.assertIsNone(column_limits(column("varchar", "varchar(12)", 12)))
+        self.assertIsNone(column_limits(column("text", "text", 65535)))
+        self.assertIsNone(column_limits(column("float")))
+
+    def test_the_achievement_hazard(self):
+        """The case this guard exists for: a fork's smallint achievement column.
+
+        Ascension merges Challenge-of-Ascension ids past 65535 into
+        Achievement.dbc, while character_achievement.achievement is smallint
+        unsigned on a stock schema.
+        """
+        achievement = column("smallint", "smallint(5) unsigned")
+        self.assertTrue(value_fits(achievement, 65535))
+        self.assertFalse(value_fits(achievement, 65536))
+        self.assertFalse(value_fits(achievement, 200000))
+
+    def test_a_negative_value_never_fits_an_unsigned_column(self):
+        self.assertFalse(value_fits(column("int", "int(10) unsigned"), -1))
+        self.assertTrue(value_fits(column("smallint"), -1))  # signed, so fine
+
+    def test_strings_are_measured_against_their_declared_length(self):
+        name = column("varchar", "varchar(12)", 12)
+        self.assertTrue(value_fits(name, "Probethree4"))
+        self.assertTrue(value_fits(name, "Abcdefghijkl"))
+        self.assertFalse(value_fits(name, "Abcdefghijklm"))
+
+    def test_a_blob_column_with_no_declared_length_accepts_anything(self):
+        self.assertTrue(value_fits(column("text", "text", None), "x" * 100000))
+
+    def test_none_and_booleans_are_left_alone(self):
+        """A bool is an int in Python; treating it as one here would be noise."""
+        tiny = column("tinyint", "tinyint(3) unsigned")
+        self.assertTrue(value_fits(tiny, None))
+        self.assertTrue(value_fits(tiny, True))
+        self.assertTrue(value_fits(tiny, False))
+
+    def test_ascension_spell_ids_fit_an_int_column(self):
+        """The 11xxxxx ids this fork uses are fine; only the narrow columns bite."""
+        self.assertTrue(value_fits(column("int", "int(10) unsigned"), 1111078))
+        self.assertFalse(value_fits(column("smallint", "smallint(5) unsigned"), 1111078))
 
 
 if __name__ == "__main__":

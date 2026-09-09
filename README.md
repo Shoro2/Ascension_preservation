@@ -116,6 +116,14 @@ The importer is built to be hard to misuse.
   want it.) A dry run still works with the realm up, so you can see exactly what
   the import would do before you take anyone offline.
 - **It will not guess between realms.** See above.
+- **Every planned value is measured against the column it is bound for.** Forks
+  outgrow their own schema: Ascension merges achievement ids past 65535 into
+  `Achievement.dbc` while `character_achievement.achievement` is still
+  `smallint unsigned`. A MySQL server without `STRICT` in `sql_mode` clamps such
+  a value to the column maximum instead of refusing it, so two ids collide on the
+  primary key and the whole transaction rolls back with nothing useful in the
+  error. The importer reports that as a pre-flight failure naming the column, the
+  value and the type, before anything is attempted.
 - **Bundle integrity is checked before anything else.** Eight offline checks per
   character: package digest, checkpoint digest and length, and that the digest is
   listed in the roster, the signed export receipt, the package manifest and the

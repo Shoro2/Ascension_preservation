@@ -205,11 +205,52 @@ def scalar(conn, sql: str, params: tuple = (), default: Any = None) -> Any:
 def table_columns(conn, schema: str, table: str) -> dict[str, dict[str, Any]]:
     rows = query(
         conn,
-        "SELECT COLUMN_NAME, IS_NULLABLE, COLUMN_DEFAULT, DATA_TYPE, EXTRA "
+        "SELECT COLUMN_NAME, IS_NULLABLE, COLUMN_DEFAULT, DATA_TYPE, EXTRA, "
+        "COLUMN_TYPE, CHARACTER_MAXIMUM_LENGTH "
         "FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=%s AND TABLE_NAME=%s",
         (schema, table),
     )
     return {r["COLUMN_NAME"]: r for r in rows}
+
+
+# (signed low, signed high, unsigned high) for every MySQL integer type.
+INT_RANGES = {
+    "tinyint": (-128, 127, 255),
+    "smallint": (-32768, 32767, 65535),
+    "mediumint": (-8388608, 8388607, 16777215),
+    "int": (-2147483648, 2147483647, 4294967295),
+    "bigint": (-9223372036854775808, 9223372036854775807, 18446744073709551615),
+}
+
+
+def column_limits(meta: dict[str, Any]) -> tuple[int, int] | None:
+    """What an integer column can actually hold, or None if it is not one."""
+    data_type = str(meta.get("DATA_TYPE") or "").lower()
+    if data_type not in INT_RANGES:
+        return None
+    low, high, unsigned_high = INT_RANGES[data_type]
+    if "unsigned" in str(meta.get("COLUMN_TYPE") or "").lower():
+        return 0, unsigned_high
+    return low, high
+
+
+def value_fits(meta: dict[str, Any], value: Any) -> bool:
+    """Would MySQL store this value as given, or quietly mangle it?
+
+    A server without STRICT in sql_mode clamps an out-of-range integer to the
+    column maximum and truncates an over-long string instead of refusing it.
+    That turns a bad id into a duplicate-key rollback with no useful message,
+    so the value is checked here rather than discovered mid-transaction.
+    """
+    if isinstance(value, bool) or value is None:
+        return True
+    if isinstance(value, int):
+        limits = column_limits(meta)
+        return limits is None or limits[0] <= value <= limits[1]
+    if isinstance(value, str):
+        length = meta.get("CHARACTER_MAXIMUM_LENGTH")
+        return not length or len(value) <= int(length)
+    return True
 
 
 def fill_required_columns(columns: dict[str, dict[str, Any]], row: dict[str, Any]) -> dict[str, Any]:
@@ -1054,9 +1095,10 @@ def validate_rows(conn, args: argparse.Namespace, plan: Plan) -> list[Check]:
 
     This is the part of the apply path that can be verified read-only: that
     each table exists, that every column named in a planned row really exists
-    on the target, and that no NOT NULL column without a default is left
-    unfilled. It catches the failures that would otherwise only appear
-    mid-transaction.
+    on the target, that no NOT NULL column without a default is left unfilled,
+    and that every value fits the column it is bound for. It catches the
+    failures that would otherwise only appear mid-transaction -- or, on a
+    server without STRICT sql_mode, not appear at all.
     """
     checks: list[Check] = []
     problems: list[str] = []
@@ -1071,8 +1113,14 @@ def validate_rows(conn, args: argparse.Namespace, plan: Plan) -> list[Check]:
             continue
         unknown: set[str] = set()
         unfilled: set[str] = set()
+        oversized: dict[str, tuple[Any, str]] = {}
         for row in rows:
             unknown |= set(row) - set(columns)
+            for name, value in row.items():
+                meta = columns.get(name)
+                if meta is not None and not value_fits(meta, value):
+                    oversized.setdefault(
+                        name, (value, str(meta.get("COLUMN_TYPE") or "?")))
             complete = fill_required_columns(columns, row)
             for name, meta in columns.items():
                 if (name not in complete and meta["IS_NULLABLE"] == "NO"
@@ -1083,6 +1131,18 @@ def validate_rows(conn, args: argparse.Namespace, plan: Plan) -> list[Check]:
             problems.append(f"{table}: no such column(s) {', '.join(sorted(unknown))}")
         if unfilled:
             problems.append(f"{table}: required column(s) unfilled {', '.join(sorted(unfilled))}")
+        for name in sorted(oversized):
+            value, column_type = oversized[name]
+            # Widening the column is the fix for an id the fork outgrew; it is the
+            # wrong advice for a string, where the core expects that exact width.
+            remedy = ("Shorten the value." if isinstance(value, str)
+                      else "Widen the column on the target server.")
+            problems.append(
+                f"{table}.{name} is {column_type} and cannot hold {value!r}. Without "
+                "STRICT in sql_mode MySQL clamps or truncates such a value instead of "
+                "refusing it, which usually surfaces later as a duplicate-key rollback "
+                f"with no useful message. {remedy}"
+            )
     checks.append(Check(
         "schema fit", FAIL if problems else OK,
         "; ".join(problems) if problems
