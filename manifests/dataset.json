@@ -3,7 +3,7 @@
   "repository": "https://github.com/hertigservices/ascension-data",
   "snapshot": "cache-da4e17a09b90",
   "manifest": "manifests/cache-da4e17a09b90.json",
-  "manifest_sha256": "d81dc61ee15bc1db1b5a0a65ed845a6af75385cba0ca13b44170f94f93d4e68c",
+  "manifest_sha256": "c28e9fa0fcfdc871d822493c80725dcb463338f8056b555cffee6ac2087f2866",
   "files": 219,
   "bytes": 144001022
 }
