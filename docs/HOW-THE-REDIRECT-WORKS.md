@@ -147,6 +147,12 @@ because the two servers read the session key out of the client's memory with
 `ReadProcessMemory` (see §5), and a medium-integrity process cannot open a
 handle into an elevated one.
 
+> **This integrity constraint exists only because of the `ReadProcessMemory` read.** The
+> optional `contrib/InProcessKeyOracle/` add-on reads K from *inside* the client instead, so the
+> shim no longer needs to match the client's integrity for the key. `RunAsInvoker` below is still
+> the tidy way to avoid the UAC prompt, but the elevation *dance* — matching integrity so RPM
+> works — goes away with the oracle. See `docs/AUTH-APPROACHES-EVALUATED.md`.
+
 The fix is a process-scoped compatibility shim — no registry write, no binary
 patch:
 

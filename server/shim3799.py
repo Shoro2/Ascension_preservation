@@ -20,6 +20,16 @@ The only bytes NOT statically readable (they live in the VMProtect VM) are the b
 public keys on the wire and of the shared secret, and whether a KDF wraps it. That is a tiny
 variant space; the shim auto-advances one variant per connection (one Login click each).
 
+K SOURCE (in preference order; each degrades cleanly to the next):
+  1. in-process oracle (inproc_readk -> kexport.dll @127.0.0.1:37281): reads K from INSIDE the
+     client, so no OpenProcess/RPM and no integrity match are needed -- this removes the
+     "run the shim elevated" requirement documented in docs/HOW-THE-REDIRECT-WORKS.md sec.3/5.
+     Requires kexport.dll deployed in a WRITABLE client (via the dinput8 proxy). Idea lifted
+     from FirstOni's AscensionAuthGate; see docs/AUTH-APPROACHES-EVALUATED.md.
+  2. cross-process RPM (rpm_readk): OpenProcess(VM_READ)+ReadProcessMemory; needs the shim at
+     the SAME integrity as the client (the "launch it yourself elevated" friction).
+  3. variant guess: no memory read at all; correct only if the X25519 variant is guessed right.
+
 Usage:  python shim3799.py [account] [password]   (creds only used for the account-match log now)
 Point the client realmList at 127.0.0.1:3799 and click Login once per variant. Ctrl-C to stop.
 """
@@ -35,6 +45,10 @@ if os.path.isdir(_TOOLS_DIR) and _TOOLS_DIR not in sys.path:
     sys.path.append(_TOOLS_DIR)
 from ascension_x25519_m2 import x25519, x25519_base  # reviewed RFC-7748 impl (same dir)
 import rpm_readk  # passive ReadProcessMemory of the client's session key K (obj+0x120)
+try:
+    import inproc_readk  # in-process K oracle (kexport.dll @127.0.0.1:37281); preferred over RPM
+except Exception:
+    inproc_readk = None
 
 ACCOUNT  = sys.argv[1] if len(sys.argv) > 1 else "test"
 PASSWORD = sys.argv[2] if len(sys.argv) > 2 else "test"
@@ -293,19 +307,28 @@ def handle(conn, cid):
     amode = "zero" if set(A_LE) == {0} else ("04ph" if A_LE[:2] == b"\x04\x00" else "memtbl")
     print("      proof rx: A=%s M1=%s crc=%s" % (amode, M1c.hex()[:12] + "..", crc.hex()[:12] + ".."))
 
-    # the client has now computed K (it needed B, sent above). Read it from memory.
+    # the client has now computed K (it needed B, sent above). Get it live. Preference
+    # order: (1) in-process oracle (kexport.dll) -- no RPM, no integrity match needed;
+    # (2) cross-process RPM (needs equal integrity); (3) variant guess (no memory read).
+    # (2) and (3) keep the shim a complete standalone fallback when the oracle is absent.
     K = None; ksrc = ""
-    rr = rpm_readk.read_k()
-    if rr and rr[3] is not None:
-        pid, base, objptr, K = rr
-        ksrc = "RPM pid=%d base=0x%x obj=0x%x" % (pid, base, objptr)
-        print("      RPM read K = %s   [%s]" % (K.hex(), ksrc))
+    ik = inproc_readk.read_k() if inproc_readk else None
+    if ik is not None:
+        K = ik
+        ksrc = "inproc oracle :%d" % inproc_readk.ORACLE_PORT
+        print("      in-process K = %s   [%s]" % (K.hex(), ksrc))
     else:
-        print("      !! RPM read FAILED (%s) -- falling back to variant guess" %
-              ("no live obj/K" if rr else "access denied / not elevated?"))
-        v = VARIANTS[(cid - 1) % NUM_VARIANTS]
-        K = _ecdh_K(server_priv, client_pub_wire, *v["ecdh"]) if "ecdh" in v else v["K"]
-        ksrc = "fallback:" + v["label"]
+        rr = rpm_readk.read_k()
+        if rr and rr[3] is not None:
+            pid, base, objptr, K = rr
+            ksrc = "RPM pid=%d base=0x%x obj=0x%x" % (pid, base, objptr)
+            print("      RPM read K = %s   [%s]" % (K.hex(), ksrc))
+        else:
+            print("      !! no in-process oracle and RPM read FAILED (%s) -- variant guess" %
+                  ("no live obj/K" if rr else "access denied / not elevated?"))
+            v = VARIANTS[(cid - 1) % NUM_VARIANTS]
+            K = _ecdh_K(server_priv, client_pub_wire, *v["ecdh"]) if "ecdh" in v else v["K"]
+            ksrc = "fallback:" + v["label"]
     M2 = hmac.new(K, b"OK", hashlib.sha256).digest()
 
     # is the client waiting for M2, or did it already bail?
@@ -378,9 +401,19 @@ def main():
     srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     srv.bind(("127.0.0.1", PORT)); srv.listen(4)
     print("=" * 72)
-    print("Ascension shim (RPM mode) on 127.0.0.1:%d   log-> %s" % (PORT, LOGPATH))
-    print("M2 = HMAC-SHA256(K,'OK');  K read live from client memory (obj+0x120).")
+    print("Ascension shim on 127.0.0.1:%d   log-> %s" % (PORT, LOGPATH))
+    print("M2 = HMAC-SHA256(K,'OK');  K source order: in-process oracle -> RPM -> variant.")
     print("account (for match log): '%s'" % ACCOUNT)
+    # startup self-check: is the in-process oracle (kexport.dll) present?
+    if inproc_readk and inproc_readk.available():
+        ik = inproc_readk.read_k()
+        print("IN-PROCESS ORACLE OK on :%d  (%s) -- no RPM/elevation needed."
+              % (inproc_readk.ORACLE_PORT,
+                 ("K=" + ik.hex()) if ik else "K not computed yet; appears once you click Login"))
+    else:
+        print("in-process oracle (kexport.dll :%s) not present -- using RPM. Deploy kexport.dll "
+              "in a writable client to drop the elevation requirement."
+              % (inproc_readk.ORACLE_PORT if inproc_readk else 37281))
     # startup self-check: can we read the client's memory at this integrity level?
     pids = rpm_readk.find_pids()
     print("Ascension.exe PIDs seen: %s" % (pids or "NONE (client not running yet)"))

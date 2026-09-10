@@ -1,0 +1,5 @@
+# build artifacts (source-only package)
+*.dll
+*.obj
+*.exp
+*.lib
