@@ -30,6 +30,10 @@ STAGES = [("intake",  "intake.py"),
           # sit here: after the caches, before the guide that describes them.
           ("catalogue", "ingest_gameobjects.py"),
           ("export",  "export.py"),
+          # The same records once more, as Lua tables an addon on a STOCK 3.3.5a
+          # client can load. It reads export's views, so it runs after them, and
+          # it writes under lua/ so both gates below cover its output.
+          ("stock",   "export_stock_client.py"),
           ("rebuild", "rebuild.py"),
           # Two gates, asking opposite questions of the same tree. `columns`
           # asks whether the data we meant to publish is still in there;

@@ -365,7 +365,11 @@ def write_file_guide(out, stats):
           "decoder without having to re-collect anything.\n"]
     L += ["| `lua/MobSpells.lua` | addon SavedVariables, plain Lua | a text editor, or "
           "the addon itself |",
-          "| `lua/AIO_Client.lua` | addon SavedVariables, plain Lua | a text editor |\n"]
+          "| `lua/AIO_Client.lua` | addon SavedVariables, plain Lua | a text editor |",
+          "| `lua/stock-client/*.lua` | item / creature / quest records as Lua 5.1 tables "
+          "for an addon on a stock 3.3.5a client | any addon (see its README.md) |",
+          "| `dbc/item_display_icons.tsv.gz` | Ascension display id -> icon name, and the "
+          "stock display id with identical art | text editor, Excel |\n"]
     with open(f"{out}/FILE-GUIDE.md", "w", encoding="utf-8", newline="\n") as f:
         f.write("\n".join(L) + "\n")
 
@@ -502,7 +506,8 @@ def write_docs(out, caches, slugs, stats, mode_rows, srcs):
          "| `raw/<cache>.pack.gz` | lossless payloads, `[entry u32][size u32][payload]`. |",
          "| `raw/<cache>.index.tsv.gz` | per record: sha1, size, modes, capture dates, corroboration count. |",
          "| `sources.tsv` | every submitted file: realm, mode, capture date, record count. |",
-         "| `lua/` | merged addon SavedVariables, and the server-pushed UI code. |\n",
+         "| `lua/` | merged addon SavedVariables, and the server-pushed UI code. |",
+         "| `lua/stock-client/` | the item, creature and quest records as Lua 5.1 tables an addon on a **stock** client can load; `dbc/item_display_icons.tsv.gz` is the icon lookup they use. |\n",
          "**The data files are gzipped.** Uncompressed this dataset is ~756 MB and its",
          "largest file is a 254 MB itemcache; GitHub rejects anything over 100 MB. Each",
          "`.gz` holds one file — open it with 7-Zip, `gunzip`, or directly from code.",

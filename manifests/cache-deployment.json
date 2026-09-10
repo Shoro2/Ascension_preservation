@@ -31,6 +31,10 @@
       "destination": "tools/export.py"
     },
     {
+      "source": "tools/cache-consolidator/tools/export_stock_client.py",
+      "destination": "tools/export_stock_client.py"
+    },
+    {
       "source": "tools/cache-consolidator/tools/gametest.py",
       "destination": "tools/gametest.py"
     },
