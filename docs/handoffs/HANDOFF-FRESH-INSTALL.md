@@ -1,5 +1,12 @@
 # Handoff — setting this archive up on a fresh machine
 
+> **Authentication update (2026-09-09): AuthGate is now the default.** Follow the
+> [current original-client guide](../HOW-THE-REDIRECT-WORKS.md) and
+> [AuthGate package](../../contrib/AscensionAuthGate/README.md) for login and launch.
+> The shim-on-3799, permissive-password and standalone-world boot steps below
+> are historical alternatives. Keep this handoff for its data/core prerequisites
+> and research; do not use its old auth steps as the default.
+
 This is the maintainer's reply to a handoff written by someone standing the
 archive up from this repository on their own PC, whose session died about five
 seconds after world entry. It is written for their AI assistant to consume

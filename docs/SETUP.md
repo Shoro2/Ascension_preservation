@@ -30,8 +30,11 @@ installed-hub/
   Keep its SQL staging and backups outside source and verify the target config/database.
 - **Use the Ascension bridge:** configure the private runtime file below, retain your
   existing core and client, and follow the protocol/boot handoffs for the client redirect.
-  The bridge listens on loopback 8088 and reaches AzerothCore on 8086. The auth shim
-  uses 3799. The Python testbed uses 8087 and separate JSON character state.
+  The bridge listens on loopback 8088 and reaches AzerothCore on 8086. The default
+  AuthGate route validates against authserver 3724 and serves the client login
+  responder inside the client on 3725. Follow [the current AuthGate guide](HOW-THE-REDIRECT-WORKS.md);
+  an already migrated installation needs no client reinstall. The legacy shim on
+  3799 is optional. The Python testbed uses 8087 and separate JSON character state.
 
 ## Runtime configuration
 

@@ -7,7 +7,8 @@ Tools and protocol research for reconstructing Ascension locally with a user-sup
 
 | Component | Purpose |
 |---|---|
-| [Server](server/) | Auth shim, AzerothCore bridge, and separate Python protocol testbed |
+| [AuthGate](contrib/AscensionAuthGate/) | Default original-client authentication, adapted from FirstOni |
+| [Server](server/) | AzerothCore bridge, legacy auth shim, and separate Python protocol testbed |
 | [Cache tools](tools/cache-consolidator/) | Intake, lossless variants, cache installation, world import |
 | [Character importer](tools/character-importer/) | Standalone offline Bind My Soul importer |
 | [Stock-client work](stock-client/) | Experimental generators and authored compatibility shim |
@@ -26,6 +27,10 @@ Mutable state, credentials, logs, client files, DBCs, MPQs, database backups and
 intake submissions belong in your installation or archive, outside this checkout.
 See [runtime configuration](docs/SETUP.md#runtime-configuration) and
 [deployment and rollback](docs/SETUP.md#deployment-and-rollback).
+
+The default original-client path uses the reviewed AuthGate package and the
+AzerothCore bridge. See [the current authentication guide](docs/HOW-THE-REDIRECT-WORKS.md).
+The legacy shim on 3799 remains an explicit alternative.
 
 The bridge and Python testbed are distinct runtime paths. A feature verified in one
 is not automatically verified in the other. Stock-client compatibility work remains

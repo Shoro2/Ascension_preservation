@@ -23,7 +23,7 @@
     "bridge": {
       "listen": "127.0.0.1:8088",
       "upstream": "127.0.0.1:8086",
-      "auth": "127.0.0.1:3799"
+      "auth": "AuthGate: authserver 127.0.0.1:3724; client-owned responder 127.0.0.1:3725"
     },
     "testbed": {
       "listen": "127.0.0.1:8087",
@@ -31,7 +31,19 @@
     },
     "stock_client": {
       "status": "experimental; visual/login/world validation incomplete"
+    },
+    "legacy_shim": {
+      "listen": "127.0.0.1:3799",
+      "status": "explicit legacy alternative; not an AuthGate dependency"
     }
   },
-  "verification_scope": "Code, offline protocol tests, CLI and data integrity; no new in-game compatibility claim"
+  "verification_scope": "Code, offline protocol tests, CLI and data integrity; no new in-game compatibility claim",
+  "authgate_publication": {
+    "commits": [
+      "877651e",
+      "0365bbd"
+    ],
+    "source": "contrib/AscensionAuthGate",
+    "status": "reviewed default retained from concurrent published work; consolidation does not reinstall client"
+  }
 }

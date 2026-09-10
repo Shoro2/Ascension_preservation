@@ -24,5 +24,7 @@ redirects, current dataset and history. It remains active for future submissions
 its source code lives here. The `.ascension-data.json` marker prevents the cache
 publisher from copying tool source back into the data repository.
 
-Unfinished alternate AuthGate work and generated stock-client data were preserved
-locally. They were not promoted to a tested runtime during consolidation.
+The concurrently published reviewed AuthGate default was merged before publication.
+Its own guide and security review retain their source-attributed verification.
+Consolidation did not change the client installation. Unfinished stock-client data
+and source remain preserved and are not promoted to a verified gameplay path.

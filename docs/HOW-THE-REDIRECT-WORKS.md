@@ -1,3 +1,172 @@
+# AuthGate: the default original-client login and world path
+
+Updated 2026-09-09 after successful original-client gameplay verification.
+**AuthGate is the default authentication path**, adapted from **FirstOni's
+AscensionAuthGate**. Use the reviewed package in
+[`contrib/AscensionAuthGate`](../contrib/AscensionAuthGate/README.md).
+
+The original `Ascension.exe` stays unchanged. Its genuine `Extensions.dll` is
+preserved as `Extensions_orig.dll`, and the reviewed proxy is installed under
+the original DLL name. This is a client-side proxy installation, so older
+claims that the entire client installation remains unmodified no longer describe
+the default. Shared game data is not changed.
+
+## Current architecture and ports
+
+```text
+Original Ascension.exe + reviewed AuthGate proxy
+  |-- SRP credential validation --> 127.0.0.1:3724  AzerothCore authserver
+  |-- custom login responder ----> 127.0.0.1:3725  inside this client process
+  `-- selected realm ------------> 127.0.0.1:8088  ascension_bridge.py
+                                                  |
+                                                  v
+                                     127.0.0.1:8086  AzerothCore worldserver
+```
+
+| Component | Endpoint | Role |
+|---|---|---|
+| AzerothCore authserver | `127.0.0.1:3724` | Validate the existing account/password through SRP and supply the server proof |
+| AuthGate | `127.0.0.1:3725` | Answer the client's custom login protocol and advertise the local bridge |
+| World bridge | `127.0.0.1:8088` | Translate between the Ascension client and the configured core world |
+| AzerothCore worldserver | `127.0.0.1:8086` | Serve the selected realm's world and character database |
+
+Port 3725 appears only while the client is running. Do not start a separate
+helper on that port. The old Python auth shim on **3799 is not required** and
+should be stopped/removed from this realm's startup dependencies. The standalone
+Python world server on 8087 is an alternative historical route, not the world
+endpoint advertised by this AuthGate build.
+
+AuthGate requires an existing local account and its **correct password**. It
+verifies the complete authserver SRP proof. The legacy instruction to use `test`
+with any password does not apply. AuthGate neither creates accounts nor moves
+characters; the selected profile, bridge configuration and account determine
+the roster.
+
+## Set up the original client
+
+First prepare the intended AzerothCore realm, its databases and client-supplied
+assets. The [fresh-machine reference](handoffs/HANDOFF-FRESH-INSTALL.md) covers
+those prerequisites; use this guide for the current authentication/launch steps.
+The archive's full loose `Interface/GlueXML/AccountLogin.lua` must contain its
+`ASCENSION_ARCHIVE_REALMLIST` override. If preparing it from your own client,
+retain the complete file and its login functions; a tiny replacement containing
+only the override breaks the login UI. The historical research below explains
+that hook, but its old port and boot commands are superseded.
+
+From the repository root, build and inspect the reviewed source:
+
+```powershell
+Set-Location .\contrib\AscensionAuthGate
+python -m pip install pefile
+.\build.bat
+.\test.bat
+python .\verify-build.py
+```
+
+Use Visual Studio 2022 C++ x86 build tools; adjust the batch files' vcvars32 path
+for another Visual Studio edition. No prebuilt DLL or genuine client asset is
+shipped. The isolated tests do not load or patch a game client.
+
+Close Ascension clients, resolve any hub junction to the **real original client
+directory**, then install from the same package directory:
+
+```powershell
+.\install-client.ps1 -ClientRoot 'C:\YourAscensionClient'
+```
+
+The installer checks the supported executable and genuine extension hashes,
+preserves the original extension, and creates the new proxy. An unexpected
+existing proxy/backup is rejected for review. It does not copy or edit `Data`.
+The original-client migration is already complete on the maintainer's hub;
+existing users there should launch through the hub rather than reinstalling.
+
+## Start the realm and launch
+
+1. Start the **intended realm's** authserver on loopback 3724, configured
+   worldserver on 8086, and world bridge on 8088. Keep their existing database
+   names and mode-specific bridge arguments. Configure any redacted database
+   placeholders locally; never commit the real credentials.
+2. Keep the legacy shim stopped. Close competing Ascension copies; the world
+   bridge still relies on one matching client process.
+3. From a **normal unelevated PowerShell**, run the reviewed package launcher:
+
+```powershell
+.\start-client.ps1 -ClientRoot 'C:\YourAscensionClient' -Mode coa -ExpectedAuthserverPath 'C:\YourRealm\authserver.exe'
+```
+
+Use `-Mode ascension` for Free-Pick. The mode selects the matching realm name
+and metadata; it does not switch the server database for you. The launcher
+verifies the intended authserver executable, client hashes and local listeners.
+Adding `-NoLaunch` performs a **read-only preflight**; it does not prepare settings
+for a later direct launch.
+
+The launcher sets both the archive glue override and the realm settings to
+**`127.0.0.1:3725`** and uses process-scoped `RunAsInvoker`. Config.wtf alone is
+insufficient because the native client can restore its own realm address.
+AuthGate also redirects the known native production-auth endpoint to its local
+responder. Leave `Data/enUS/realmlist.wtf` and all shared Data untouched.
+
+The supported path is the package's `start-client.ps1`, or the already-updated
+hub launcher. The old repository `server/launch-client.ps1` and the direct-launch
+recipes in older handoffs belong to the legacy shim workflow. Their `-NoLaunch`
+and restore behavior must not be confused with the current script.
+
+## Hub integration and other realms
+
+The maintainer's `ascension` and `coa` profiles intentionally share the original
+client. Both now start their authserver and bridge without the shim. Their
+world configs, bridge arguments and character databases remain distinct and
+unchanged; the other four realm/client profiles were compared unchanged.
+
+For another hub with those profiles, set `world.authserver` to `true`, remove
+only the `shim3799` helper, and route the existing client launcher to AuthGate
+with the selected mode and expected authserver executable. Preserve each
+profile's other fields. Do not add the client-owned 3725 listener as a server
+readiness dependency, and do not change unrelated realm launchers.
+
+## Verify the result
+
+Log in with an existing local account, choose its character, enter the world,
+and move around. Look in the original client's **`proxy_auth.log`** for:
+
+```text
+[startup] original extension loaded
+[gate] SRP6 self-test PASS
+[gate] VALID (proceed)
+=== AUTHSRV listening on 127.0.0.1:3725 (in-process) ===
+***** M2 ACCEPTED -- client sent 0x10 (realm-list request) *****
+```
+
+These are status markers, not a required ordering. A normal auth-channel close
+can follow world entry. The client should own listener 3725 and have an
+established loopback connection to bridge 8088; the bridge should report
+`AUTH_OK`, `CMSG_PLAYER_LOGIN` and `SMSG_LOGIN_VERIFY_WORLD`. AuthGate does not
+log usernames, passwords, keys or packet contents. Do not revive the old capture
+files or diagnostic rollback.
+
+The reviewed build passed **59 isolated checks and two real local credential
+checks**. With the shim stopped, the user verified the original client's existing
+character was **working flawlessly**. Only then was the test copy removed. Its
+shared Data junction was unlinked without traversing the original target, and
+original-file hashes/shared Data were checked afterward.
+
+Read the [security review](../contrib/AscensionAuthGate/SECURITY-REVIEW.md) for the
+scope: a trusted single-machine design with build-specific hooks. The original
+proprietary client has its own networking; AuthGate does not certify or filter
+all of that traffic. Credit and supplied-source provenance are in
+[FirstOni's attribution notice](../contrib/AscensionAuthGate/THIRD-PARTY-NOTICE.md).
+
+## Historical shim research
+
+The expandable record below preserves the earlier 3799/8087 workflow and its
+protocol discoveries. **It is not the default setup guide.** Its permissive
+password rules, shim startup commands and old launcher advice apply only to a
+deliberate legacy setup; use the AuthGate instructions above for the maintained
+original-client route.
+
+<details>
+<summary>Earlier shim-based redirect and standalone-world runbook (legacy)</summary>
+
 # How the client was redirected to a local server — and got in-game
 
 This is the part people ask about first: **how do you make the real, unmodified
@@ -318,3 +487,5 @@ sends the realm-flavour + `SMSG_REALM_INFO(0x9BC)` bytes that make the custom
 addons loadable, and keeps the client alive with a 10-second `SMSG_TIME_SYNC_REQ`.
 Net result: the unmodified client logs in and stays in-world on a fully local
 stack, touching the live service for nothing but CDN pings.
+
+</details>
