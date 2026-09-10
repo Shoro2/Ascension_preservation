@@ -1,5 +1,12 @@
 # Ascension Archive — session handoff & boot runbook
 
+> **Authentication update (2026-09-09): AuthGate is now the default.** Follow the
+> [current original-client guide](../HOW-THE-REDIRECT-WORKS.md) and
+> [AuthGate package](../../contrib/AscensionAuthGate/README.md) for login and launch.
+> The shim-on-3799, permissive-password and standalone-world boot steps below
+> are historical alternatives. Keep this handoff for its data/core prerequisites
+> and research; do not use its old auth steps as the default.
+
 > **SUPERSEDED as the active runbook (2026-09-01).** Start at
 > **HANDOFF-SPELLS-TALENTS-CLASSES.md** -- spells, talent trees and custom
 > classes are the current goal. Archetype / Build Creator work (section 4.12)

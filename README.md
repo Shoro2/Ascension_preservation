@@ -2,16 +2,16 @@
 
 A preservation archive of **Project Ascension**'s classless custom WoW 3.3.5a
 experience — focused on the **Conquest of Azeroth (CoA) custom-class /
-Character-Advancement** system — rebuilt so the **unmodified Ascension client can
-log into a fully local server and play offline**.
+Character-Advancement** system — rebuilt so the **original Ascension executable can
+log into a local realm using the reviewed AuthGate proxy**.
 
 Project Ascension's live service shut down **2026-09-04**. This repository is the
 post-shutdown record of *how the client works* and a working local re-host of the
 login → world → Character-Advancement path.
 
 > **What this is:** original reverse-engineering, protocol documentation, and a
-> small Python server stack (auth shim + world server) that speaks enough of
-> Ascension's wire protocol to satisfy the real client.
+> reviewed AuthGate authentication proxy plus a Python world bridge/server
+> stack that speaks Ascension's wire protocol to the original client.
 >
 > **What this is NOT:** it does **not** contain the Ascension/Blizzard client,
 > its DBCs, MPQs, art, or bulk content. You bring those from your own legally
@@ -28,54 +28,57 @@ The source, build/tests and guarded original-client installer are included; game
 
 ## Start here
 
-1. **[`docs/HOW-THE-REDIRECT-WORKS.md`](docs/HOW-THE-REDIRECT-WORKS.md)** — the
-   detailed writeup of **how the client is redirected to a local server and gets
-   in-game**. Read this first; it is the heart of the project.
-2. **[`docs/handoffs/HANDOFF-ARCHIVE-SESSION.md`](docs/handoffs/HANDOFF-ARCHIVE-SESSION.md)**
-   — full boot runbook + everything already solved.
-3. **[`docs/handoffs/HANDOFF-SPELLS-TALENTS-CLASSES.md`](docs/handoffs/HANDOFF-SPELLS-TALENTS-CLASSES.md)**
-   — the current frontier: CoA spells, talent trees, custom classes.
-4. **[`docs/KNOWN-ISSUES.md`](docs/KNOWN-ISSUES.md)** — symptom-first list of
-   failures that look like server or protocol bugs but are not. Check it before
-   diagnosing a hang or a silent disconnect.
-5. **[`docs/handoffs/HANDOFF-FRESH-INSTALL.md`](docs/handoffs/HANDOFF-FRESH-INSTALL.md)**
-   — **setting this up on another machine.** Written for a person (or their AI
-   assistant) standing the stack up from this repository: the +5 s in-world
-   disconnect and its fix, the repository-layout gotchas, which files you must
-   extract from your own client, and the AzerothCore build / map / DB answers.
+1. **[Current AuthGate guide](docs/HOW-THE-REDIRECT-WORKS.md)** — the default
+   architecture, ports, original-client setup, launch sequence and verification.
+2. **[AuthGate package](contrib/AscensionAuthGate/README.md)** — source, build/test
+   commands, guarded installer and launcher, with credit to FirstOni.
+3. **[Fresh-machine data and core setup](docs/handoffs/HANDOFF-FRESH-INSTALL.md)**
+   — required client-supplied assets, repository layout, maps and database setup.
+   Its historical shim/standalone-world login instructions are superseded by
+   the current AuthGate guide.
+4. **[Spells, talents and classes](docs/handoffs/HANDOFF-SPELLS-TALENTS-CLASSES.md)**
+   and **[known issues](docs/KNOWN-ISSUES.md)** — gameplay progress and troubleshooting.
+5. **[Earlier archive research](docs/handoffs/HANDOFF-ARCHIVE-SESSION.md)** —
+   historical discoveries and the former boot sequence, retained for reference.
 
 ## What works
 
-- The **unmodified `Ascension.exe`** logs into a local stack (auth shim on
-  `127.0.0.1:3799`, world server on `127.0.0.1:8087`), unelevated, no UAC, no
-  binary patching, no network-crypto defeat.
-- Client reaches **character-select**, **enters and stays in the world**
-  (Sunstrider Isle), and touches the live service for nothing but CDN pings.
-- The **Conquest-of-Azeroth / Character-Advancement panel renders** — 153
-  populated class|tab buckets, 8873 entries, 42 classes — plus archetypes and
-  working character creation into custom classes.
-- 3.3.5a account-data exchange (keybinds, action bars) served from the server.
+- The original `Ascension.exe` launches unelevated with the reviewed **AuthGate**
+  proxy. The genuine extension is preserved as `Extensions_orig.dll`.
+- An existing local account's **correct password is required**. AuthGate validates
+  it with the realm's authserver on `127.0.0.1:3724` and verifies the server proof.
+- The client owns its custom-auth listener on `127.0.0.1:3725`, then enters the
+  world through the bridge on `127.0.0.1:8088` and AzerothCore on `8086`.
+- The original-client character reached the world with the legacy shim stopped;
+  the user confirmed flawless gameplay. CoA and Free-Pick retain distinct realm
+  metadata and the configured profile's character database.
+- The reviewed AuthGate package passed 59 isolated checks and two real local
+  credential checks. See its [security review](contrib/AscensionAuthGate/SECURITY-REVIEW.md)
+  for the evidence and scope. The proprietary client's own external networking
+  is a separate boundary; AuthGate is not a firewall for it.
 
-See the handoffs for the precise state and the open items.
+The gameplay handoffs document Character Advancement, account-data exchange,
+and remaining content limitations. Historical standalone-world results are
+identified separately from the current bridge route.
 
 ## Repository layout
 
 ```
 docs/            Protocol specs and narrative write-ups (our RE work)
   HOW-THE-REDIRECT-WORKS.md     ← how the redirect + in-game entry works
-  WIRE-SPEC.md                  auth (3799) handshake, byte-level
-  WORLD-WIRE-SPEC.md            world (8087) handshake
+  WIRE-SPEC.md                  custom auth wire research (historically captured on 3799)
+  WORLD-WIRE-SPEC.md            world protocol research (standalone route on 8087)
   ASCENSION-NOTES.md            master notes: client layout, redirect, DB rebuild
   KNOWN-ISSUES.md               symptom-first: hangs/disconnects and their real causes
   protocol/                     opcode + handler maps
   handoffs/                     session handoffs (boot runbook, CoA deep-dives)
 
 server/          The runnable local stack
-  shim3799.py                   permissive auth shim (port 3799)
-  world_server.py               world server (port 8087)
+  shim3799.py                   LEGACY permissive auth shim (3799); not a default dependency
+  world_server.py               alternative standalone world server (8087)
   ascension_bridge.py           bridge (port 8088) onto an AzerothCore worldserver (8086)
   rpm_readk.py                  reads the session key from client memory
-  *.ps1                         launch / restart helpers
+  *.ps1                         legacy/server helpers; current client launcher is in AuthGate
   worldserver-bridge.conf       AzerothCore worldserver config (DB password REDACTED)
   data/                         server seed/state we generated (builds, chars, keybinds…)
   rexxar-reference/ca-dbc/      NOT shipped: put the CharacterAdvancement*.dbc you extract
@@ -102,12 +105,13 @@ contrib/         Tools contributed by others, adapted (see each README)
 
 ## Requirements
 
-- Windows, Python 3.x.
+- Windows, Python 3.x, and Visual Studio C++ x86 build tools to build AuthGate.
+  Its PE verification script also requires Python `pefile`; see the package guide.
 - A legally obtained Project Ascension 3.3.5a client (see `data/MANIFEST.md` for
   the exact files the server reads/needs). Paths in the scripts assume a layout
   like `C:\AzerothRealm\client-ascension\…`; adjust to yours.
-- For the AzerothCore-backed world-DB route: a MySQL/MariaDB instance and an
-  AzerothCore 3.3.5a worldserver. The bridge speaks stock build 12340 to the core,
+- For the default bridge route: a MySQL/MariaDB instance, an AzerothCore
+  authserver with an existing local account, and an AzerothCore 3.3.5a worldserver. The bridge speaks stock build 12340 to the core,
   so upstream `azerothcore-wotlk` `master` with no modules is enough; the
   maintainer's own core is a locally built mod-playerbots fork, which is not
   required. Maps/vmaps/mmaps come from a **clean stock 3.3.5a client**, never from
@@ -125,8 +129,10 @@ contrib/         Tools contributed by others, adapted (see each README)
 This package was scrubbed before publishing: the maintainer's account
 email/passwords and the real DB password were removed, and raw live-login packet
 captures (`e0-captures/`, `live-*.bin`) and server logs are **excluded**. The
-legacy shim accepts account `test` / any password; the default AuthGate path requires an existing local account and its correct password. If you regenerate content from a
-live capture, do not commit captures containing real credentials.
+default AuthGate path requires an existing local account and its correct
+password. Raw key logging and diagnostic rollback are disabled. The former
+shim's permissive login is a legacy behavior, not an AuthGate setup instruction.
+Do not commit credentials, runtime histories or raw packet/key captures.
 
 ## Credits
 
