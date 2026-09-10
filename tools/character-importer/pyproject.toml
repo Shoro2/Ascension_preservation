@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bindmysoul-importer"
+version = "1.1.1"
+description = "Rebuild a Bind My Soul character on your own AzerothCore server, offline."
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = ["PyMySQL>=1.0"]
+keywords = ["azerothcore", "wow", "wotlk", "bindmysoul", "character", "import"]
+classifiers = [
+    "Environment :: Console",
+    "Intended Audience :: System Administrators",
+    "Programming Language :: Python :: 3",
+    "Topic :: Games/Entertainment",
+    "Topic :: Database",
+]
+
+[project.scripts]
+bms-import = "bms_import:cli"
+
+[tool.setuptools]
+py-modules = [
+    "bms_bundle",
+    "bms_config",
+    "bms_dbc",
+    "bms_import",
+    "bms_map",
+    "bms_parse",
+]

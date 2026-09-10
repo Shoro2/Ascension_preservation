@@ -1,0 +1,7 @@
+# Keep line endings sane across the Linux and Windows machines people host
+# realms on: normalise in the repo, check out native.
+* text=auto
+*.py text
+*.md text
+*.toml text
+*.yml text

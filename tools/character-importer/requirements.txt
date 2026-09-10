@@ -1,0 +1,4 @@
+# The only dependency. Pure Python, so it needs no compiler and no MySQL
+# client library installed. Everything else this tool uses is the standard
+# library.
+PyMySQL>=1.0
