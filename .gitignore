@@ -56,3 +56,12 @@ shots/
 rexxar-reference/live-00*.png
 reference/screenshots/live-*.png
 live-*.png
+
+# Runtime and deployment state
+**/runtime.local.json
+/runtime/
+/deployments/
+**/import-out/
+*.bmsr.zip
+# Generated stock-client datasets are archived outside source.
+/stock-client/data/

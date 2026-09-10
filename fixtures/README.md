@@ -1,0 +1,1 @@
+Testbed examples retained from the pre-consolidation server/data directory. They are not a live character database. Services write only to the configured runtime state directory. Copy examples only into a new empty test runtime.

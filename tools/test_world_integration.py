@@ -12,6 +12,7 @@ import sys, os, types, struct, socket, threading, tempfile
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, BASE)
+sys.path.insert(0, os.path.join(os.path.dirname(BASE), "server"))
 
 _stub = types.ModuleType("rpm_readk")
 _stub.find_pids = lambda: []

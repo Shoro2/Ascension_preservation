@@ -11,6 +11,7 @@ import sys, os, types, struct
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, BASE)
+sys.path.insert(0, os.path.join(os.path.dirname(BASE), "server"))
 
 # --- stub the passive-RPM module so importing world_server needs no client ---
 _stub = types.ModuleType("rpm_readk")

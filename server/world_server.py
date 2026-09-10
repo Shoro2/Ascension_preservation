@@ -49,6 +49,7 @@ import socket, os, sys, time, hashlib, hmac, struct, json, csv, io, mmap, copy a
 import math, random
 
 BASE = os.path.dirname(os.path.abspath(__file__))
+import runtime_paths as paths
 sys.path.insert(0, BASE)
 # The public repo ships chardata / archive_ports / ascension_x25519_m2 under
 # ../tools rather than beside this file.  Look there too, after BASE, so neither
@@ -69,14 +70,13 @@ def _first_existing(*cands):
     return cands[0]
 
 
-LOG = os.path.join(BASE, "world_server_log.txt")
+LOG = paths.log_file("world_server_log.txt")
 # Seed/state files (characters, account data, keybinds, builds, bars).  The public
 # repo ships them in ./data; the working realm dir keeps them beside this file.
 # A missing seed file does NOT stop the server -- it logs one "unreadable ... not
 # seeding" line and carries on with empty keybinds and no characters -- which is
 # exactly why the resolved directory is reported at startup.
-DATA_DIR = os.environ.get("ASC_DATA_DIR") or (
-    os.path.join(BASE, "data") if os.path.isdir(os.path.join(BASE, "data")) else BASE)
+DATA_DIR = paths.state_dir()
 CHARS_PATH = os.path.join(DATA_DIR, "characters.json")
 
 # ---- world-entry burst bisect switch ----------------------------------------
@@ -215,7 +215,7 @@ ACTIONBARS_PATH       = os.path.join(DATA_DIR, "actionbars.json")
 # working layout; the public repo ships entries.csv under ../data/ca-export and
 # leaves the DBCs to be extracted from your own client (data/MANIFEST.md).  The DBC
 # names are accepted with or without the DBFilesClient_ prefix mpqcat gives them.
-CA_REF_DIR            = os.environ.get("ASC_CA_REF") or os.path.join(BASE, "rexxar-reference")
+CA_REF_DIR            = os.environ.get("ASC_CA_REF") or paths.CONFIG.get("ca_ref_dir") or os.path.join(BASE, "rexxar-reference")
 CA_ENTRIES_CSV        = _first_existing(
     os.path.join(CA_REF_DIR, "ca-dbc-export", "entries.csv"),
     os.path.join(os.path.dirname(BASE), "data", "ca-export", "entries.csv"))
@@ -231,7 +231,7 @@ CA_CLASSTYPES_DBC     = _first_existing(
 # to wherever you extracted Ascension's Spell.dbc (patch-T.MPQ) and ChrClasses.dbc
 # (patch-M.MPQ).  Both are optional: without them the spellbook and the class-name
 # table come up empty and say so in the log.
-DBC_DIR = os.environ.get("ASC_DBC_DIR") or os.path.join(
+DBC_DIR = os.environ.get("ASC_DBC_DIR") or paths.CONFIG.get("dbc_dir") or os.path.join(
     os.path.dirname(os.path.dirname(BASE)), "server-ascension", "Data", "dbc")
 SPELL_DBC = os.path.join(DBC_DIR, "Spell.dbc")
 # Ascension's ChrClasses.dbc -- 32 rows where vanilla has 10.  Same directory,

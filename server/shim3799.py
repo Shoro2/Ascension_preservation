@@ -36,6 +36,7 @@ Point the client realmList at 127.0.0.1:3799 and click Login once per variant. C
 import socket, os, sys, hashlib, hmac, secrets, select, time, threading
 
 BASE = os.path.dirname(os.path.abspath(__file__))
+import runtime_paths as paths
 PORT = 3799
 sys.path.insert(0, BASE)
 # The public repo ships ascension_x25519_m2 / archive_ports under ../tools rather
@@ -55,7 +56,7 @@ PASSWORD = sys.argv[2] if len(sys.argv) > 2 else "test"
 
 # Tee stdout to a logfile so the result is readable even when this runs elevated in the
 # user's own console (RPM of the elevated client requires equal integrity => user launches it).
-LOGPATH = os.path.join(BASE, "shim_log.txt")
+LOGPATH = paths.log_file("shim_log.txt")
 class _Tee:
     def __init__(self, *streams): self.streams = streams
     def write(self, s):

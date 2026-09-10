@@ -65,6 +65,7 @@ import time
 import traceback
 
 BASE = os.path.dirname(os.path.abspath(__file__))
+import runtime_paths as paths
 sys.path.insert(0, BASE)
 
 # Force UTF-8 on the streams we print to.  On Windows these default to the ANSI
@@ -97,7 +98,7 @@ AC_PORT = int(os.environ.get("ASC_AC_PORT", "8086"))
 AC_REALM_ID = int(os.environ.get("ASC_AC_REALM_ID", "1"))
 AC_BUILD = int(os.environ.get("ASC_AC_BUILD", "12340"))
 
-LOG_PATH = os.path.join(BASE, "bridge_log.txt")
+LOG_PATH = paths.log_file("bridge_log.txt")
 LOG_MAX_BYTES = 32 * 1024 * 1024
 
 CLIENT_AUTH_SEED = bytes.fromhex("11223344")   # what WE challenge the client with
@@ -740,8 +741,9 @@ def db_config():
     global _DB_CFG
     if _DB_CFG is not None:
         return _DB_CFG
-    conf = os.path.join(os.path.dirname(os.path.dirname(BASE)),
-                        "server-ascension", "configs", "worldserver.conf")
+    conf = paths.path("worldserver_conf", "ASC_WORLDSERVER_CONF",
+                      os.path.join(os.path.dirname(os.path.dirname(BASE)),
+                                   "server-ascension", "configs", "worldserver.conf"))
     with open(conf, encoding="utf-8", errors="replace") as fh:
         for line in fh:
             if line.startswith("LoginDatabaseInfo"):

@@ -1,0 +1,6 @@
+{
+  "runtime_dir": "../runtime/ascension",
+  "worldserver_conf": "../server-ascension/configs/worldserver.conf",
+  "dbc_dir": "../server-ascension/Data/dbc",
+  "ca_ref_dir": "../realms/ascension/rexxar-reference"
+}

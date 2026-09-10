@@ -53,6 +53,7 @@ import struct
 import threading
 
 BASE = os.path.dirname(os.path.abspath(__file__))
+import runtime_paths as paths
 
 # Path contract, identical to world_server.py so the two agree on any layout:
 #   ASC_CA_REF    the rexxar-reference directory (its ca-dbc/ holds the CA DBCs)
@@ -60,14 +61,14 @@ BASE = os.path.dirname(os.path.abspath(__file__))
 #   ASC_COA_STATE the per-character state file
 # The defaults resolve to the working layout; every one of these files is
 # extracted from your OWN client -- none ship in the repo.  See data/MANIFEST.md.
-CA_REF_DIR = os.environ.get("ASC_CA_REF") or os.path.join(BASE, "rexxar-reference")
+CA_REF_DIR = os.environ.get("ASC_CA_REF") or paths.CONFIG.get("ca_ref_dir") or os.path.join(BASE, "rexxar-reference")
 DBC_DIR = os.path.join(CA_REF_DIR, "ca-dbc")
-STATE_PATH = os.environ.get("ASC_COA_STATE") or os.path.join(BASE, "coa_state.json")
+STATE_PATH = os.environ.get("ASC_COA_STATE") or os.path.join(paths.state_dir(), "coa_state.json")
 
 # Ascension's ChrClasses.dbc: 32 rows where vanilla has 10.  Spelled out the same
 # way world_server.py spells it, because the CA DBCs and the base DBCs come out of
 # different MPQs and land in different directories.
-DBC_BASE_DIR = os.environ.get("ASC_DBC_DIR") or os.path.join(
+DBC_BASE_DIR = os.environ.get("ASC_DBC_DIR") or paths.CONFIG.get("dbc_dir") or os.path.join(
     os.path.dirname(os.path.dirname(BASE)), "server-ascension", "Data", "dbc")
 
 
