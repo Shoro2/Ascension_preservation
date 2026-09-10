@@ -105,6 +105,13 @@ contrib/         Tools contributed by others, adapted (see each README)
   maintainer's own core is a locally built mod-playerbots fork, which is not
   required. Maps/vmaps/mmaps come from a **clean stock 3.3.5a client**, never from
   Ascension's MPQ chain. Details in `docs/handoffs/HANDOFF-FRESH-INSTALL.md` §6.
+- The recovered game **data** (items, creatures, quests, texts) and the tools
+  that put it into a client or a world database live in the sister repository
+  [hertigservices/ascension-cache-consolidator](https://github.com/hertigservices/ascension-cache-consolidator):
+  `tools/install.py` for the client, `tools/import_world.py` for the AzerothCore
+  world DB, `docs/USING-THE-DATA.md` for how it shows up in game. This repository
+  is about running the Ascension *client* against a server you control; that one
+  is about the content, and works with a stock 3.3.5a client too.
 
 ## Privacy / secrets note
 

@@ -283,16 +283,36 @@ The DB the bridge realm actually plays on is built like this, all in `tools/`:
    `asc_characters`. So the base is a stock, fully populated AzerothCore world.
 2. `seed-characters.py`: refill the fixed tables of `asc_characters` from the
    source SQL.
-3. `import-world.py [quests|creatures|trainers|all]`: overlay the **WDB harvest**
-   from the live client (quests, creature templates, trainer lists) onto
-   `asc_world`. The harvest directory (`ascension-archive/`, env `ASC_ARCHIVE`)
-   is **not in this repo**. The public copy is the gzipped `cachedata/` in
-   `hertigservices/ascension-cache-consolidator`; point `ASC_ARCHIVE` at an
-   unpacked copy of it. Field mappings were derived against the 9,454 quests
-   both sides share; see the module docstring.
+3. Overlay the recovered Ascension data (items, creatures + models, gameobjects
+   + quest items, quests, page text, npc text) onto `asc_world` with
+   **`tools/import_world.py` from
+   [hertigservices/ascension-cache-consolidator](https://github.com/hertigservices/ascension-cache-consolidator)**.
+   That is the public, portable importer: it reads the gzipped `cachedata/` in
+   that repository directly (no unpacking, no `ASC_ARCHIVE`), takes the database
+   name, host and user on the command line and the password by prompt or
+   option file, finds `mysql` on `PATH`, previews before it writes, backs the
+   tables up with `mysqldump`, and is a no-op when re-run:
 
-`import-world.py` also has `MY = C:\AzerothRealm\mysql\bin\mysql.exe` hard-coded
-and reads credentials through `tools/ascreds.py`; set those for your box.
+   ```
+   python -B tools/import_world.py --db asc_world --ask-password
+   python -B tools/import_world.py --db asc_world --ask-password --apply
+   python -B tools/import_world.py --db asc_world --source conquest-of-azeroth --ask-password --apply
+   ```
+
+   Its `docs/USING-THE-DATA.md` covers what the recovered records can and cannot
+   make a realm do (an imported creature is a nameplate with no spawn, loot or
+   faction; an imported item is complete) and the **client cache version**
+   handshake — `worldserver.conf` `ClientCacheVersion` / `version.cache_id`
+   must match the number in the client's `Cache\WDB` headers or the client
+   deletes the installed caches at login. Pair it with that repository's
+   `tools/install.py` on the client side.
+
+   `import-world.py` in this repo's `tools/` is the private predecessor: it needs
+   an unpacked harvest at `ASC_ARCHIVE`, has `MY = C:\AzerothRealm\mysql\bin\mysql.exe`
+   hard-coded and reads credentials through `tools/ascreds.py`. Its quest field
+   map (derived against the 9,454 quests both sides share) is what the public
+   importer inherited; the trainer-list import is the one thing it does that the
+   public tool does not yet.
 
 `server/worldserver-bridge.conf`, beyond the three `CHANGEME_DB_PASSWORD`
 lines, has these deliberate settings and you need all of them:

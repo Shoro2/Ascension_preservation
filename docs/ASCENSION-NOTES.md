@@ -402,7 +402,7 @@ The launcher's Reference tab reads `control/refdata-ascension.json`, built by
 | --- | --- |
 | `ascreds.py` | Builds a 0600 temp MySQL defaults-file from `credentials.txt`, cleaned up at exit. Nothing here ever puts a password on a command line |
 | `clone-base.py` | `acore_*` → `asc_*`, sources read-only |
-| `import-world.py` | Loads the harvested archive into `asc_world` |
+| `import-world.py` | Loads the harvested archive into `asc_world` (private predecessor; needs `ASC_ARCHIVE` + `ascreds`). Superseded for everything but trainer lists by the portable `tools/import_world.py` in `hertigservices/ascension-cache-consolidator`, which reads that repo's `cachedata/` directly |
 | `seed-characters.py` | Refills the static `asc_characters` tables from the shipped SQL |
 | `check-dbc-fmt.py` | Applies the core's own format strings (parsed from `DBCfmt.h` + `DBCStores.cpp`) to a dbc dir and reports what would crash. Vanilla: 114 load, 0 crash. Ascension: same |
 | `fix-dbc.py` | The three lossless repairs |
