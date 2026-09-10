@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "release": "consolidation-2026-09-10",
+  "control_repository": "https://github.com/hertigservices/azeroth-control",
+  "preservation_repository": "https://github.com/hertigservices/Ascension_preservation",
+  "dataset_snapshot": "cache-da4e17a09b90",
+  "client_build": 12340,
+  "core": {
+    "repository": "https://github.com/mod-playerbots/azerothcore-wotlk",
+    "observed_base_commit": "9fb906bb7296212ff42fc95ff73a92aaf8554f0d",
+    "local_overlay_required": true,
+    "note": "Existing core checkouts contain local changes. This is a recorded base, not a claim that the deployed binaries can be reproduced from that commit alone. Core and module forks remain independent."
+  },
+  "build_prerequisites": {
+    "source": "https://github.com/hertigservices/azeroth-control/blob/main/install/versions.json",
+    "cmake": "3.31.8",
+    "openssl": "3.5.8",
+    "boost": "1.89.0-msvc-14.3-x64",
+    "mysql": "8.4.x",
+    "visual_studio": "2022-v143"
+  },
+  "runtime_modes": {
+    "bridge": {
+      "listen": "127.0.0.1:8088",
+      "upstream": "127.0.0.1:8086",
+      "auth": "127.0.0.1:3799"
+    },
+    "testbed": {
+      "listen": "127.0.0.1:8087",
+      "storage": "JSON; separate from AzerothCore character DB"
+    },
+    "stock_client": {
+      "status": "experimental; visual/login/world validation incomplete"
+    }
+  },
+  "verification_scope": "Code, offline protocol tests, CLI and data integrity; no new in-game compatibility claim"
+}

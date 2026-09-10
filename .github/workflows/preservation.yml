@@ -1,0 +1,24 @@
+name: Preservation offline tests
+on: [push, pull_request]
+jobs:
+  offline:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -B -m unittest discover -s tests -v
+      - name: Protocol packets
+        shell: pwsh
+        run: |
+          $env:ASC_RUNTIME_DIR = Join-Path $env:RUNNER_TEMP 'ascension-tests'
+          python -B tools/test_world_offline.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Cache tool regressions
+        shell: pwsh
+        run: |
+          foreach ($test in @('test_audit.py','test_columns.py','test_lock.py','test_publish.py','test_sync.py','test_data_repository.py','test_bisbeard.py')) {
+            python -B "tools/cache-consolidator/tools/$test"
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }

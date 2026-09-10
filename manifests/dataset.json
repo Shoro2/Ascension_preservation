@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "repository": "https://github.com/hertigservices/ascension-data",
+  "snapshot": "cache-da4e17a09b90",
+  "manifest": "manifests/cache-da4e17a09b90.json",
+  "manifest_sha256": "d81dc61ee15bc1db1b5a0a65ed845a6af75385cba0ca13b44170f94f93d4e68c",
+  "files": 219,
+  "bytes": 144001022
+}

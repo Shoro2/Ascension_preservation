@@ -15,6 +15,12 @@ if CONFIG_PATH.is_file():
     CONFIG = json.loads(CONFIG_PATH.read_text(encoding="utf-8-sig"))
     if not isinstance(CONFIG, dict):
         raise ValueError("Preservation runtime configuration must be a JSON object")
+for _key in ("runtime_dir", "state_dir", "log_dir", "worldserver_conf", "dbc_dir", "ca_ref_dir"):
+    if CONFIG.get(_key):
+        _value = Path(CONFIG[_key])
+        if not _value.is_absolute():
+            CONFIG[_key] = str((CONFIG_PATH.parent / _value).resolve())
+
 DEFAULT_RUNTIME = Path(os.environ.get("LOCALAPPDATA") or Path.home()) / "AscensionPreservation"
 
 def path(key, env, default):

@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "component": "ascension-preservation",
+  "files": [
+    {
+      "source": "server/world_server.py",
+      "destination": "realms/ascension/world_server.py"
+    },
+    {
+      "source": "server/ascension_bridge.py",
+      "destination": "realms/ascension/ascension_bridge.py"
+    },
+    {
+      "source": "server/shim3799.py",
+      "destination": "realms/ascension/shim3799.py"
+    },
+    {
+      "source": "server/rpm_readk.py",
+      "destination": "realms/ascension/rpm_readk.py"
+    },
+    {
+      "source": "server/coa_mode.py",
+      "destination": "realms/ascension/coa_mode.py"
+    },
+    {
+      "source": "server/inproc_readk.py",
+      "destination": "realms/ascension/inproc_readk.py"
+    },
+    {
+      "source": "server/runtime_paths.py",
+      "destination": "realms/ascension/runtime_paths.py"
+    },
+    {
+      "source": "tools/archive_ports.py",
+      "destination": "realms/ascension/archive_ports.py"
+    },
+    {
+      "source": "tools/ascension_x25519_m2.py",
+      "destination": "realms/ascension/ascension_x25519_m2.py"
+    },
+    {
+      "source": "tools/chardata.py",
+      "destination": "realms/ascension/chardata.py"
+    }
+  ]
+}

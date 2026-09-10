@@ -1,0 +1,174 @@
+{
+  "schema": 1,
+  "component": "cache-consolidator",
+  "files": [
+    {
+      "source": "tools/cache-consolidator/tools/audit_columns.py",
+      "destination": "tools/audit_columns.py"
+    },
+    {
+      "source": "tools/cache-consolidator/tools/audit_publish.py",
+      "destination": "tools/audit_publish.py"
+    },
+    {
+      "source": "tools/cache-consolidator/tools/Cache Consolidator.cmd",
+      "destination": "tools/Cache Consolidator.cmd"
+    },
+    {
+      "source": "tools/cache-consolidator/tools/column_expectations.json",
+      "destination": "tools/column_expectations.json"
+    },
+    {
+      "source": "tools/cache-consolidator/tools/config.py",
+      "destination": "tools/config.py"
+    },
+    {
+      "source": "tools/cache-consolidator/tools/contribute.py",
+      "destination": "tools/contribute.py"
+    },
+    {
+      "source": "tools/cache-consolidator/tools/export.py",
+      "destination": "tools/export.py"
+    },
+    {
+      "source": "tools/cache-consolidator/tools/gametest.py",
+      "destination": "tools/gametest.py"
+    },
+    {
+      "source": "tools/cache-consolidator/tools/harvestmerge.py",
+      "destination": "tools/harvestmerge.py"
+    },
+    {
+      "source": "tools/cache-consolidator/tools/import_world.py",
+      "destination": "tools/import_world.py"
+    },
+    {
+      "source": "tools/cache-consolidator/tools/ingest_gameobjects.py",
+      "destination": "tools/ingest_gameobjects.py"
+    },
+    {
+      "source": "tools/cache-consolidator/tools/Install Caches.cmd",
+      "destination": "tools/Install Caches.cmd"
+    },
+    {
+      "source": "tools/cache-consolidator/tools/install.py",
+      "destination": "tools/install.py"
+    },
+    {
+      "source": "tools/cache-consolidator/tools/intake.py",
+      "destination": "tools/intake.py"
+    },
+    {
+      "source": "tools/cache-consolidator/tools/luamerge.py",
+      "destination": "tools/luamerge.py"
+    },
+    {
+      "source": "tools/cache-consolidator/tools/luaser.py",
+      "destination": "tools/luaser.py"
+    },
+    {
+      "source": "tools/cache-consolidator/tools/merge.py",
+      "destination": "tools/merge.py"
+    },
+    {
+      "source": "tools/cache-consolidator/tools/modes.py",
+      "destination": "tools/modes.py"
+    },
+    {
+      "source": "tools/cache-consolidator/tools/publish.py",
+      "destination": "tools/publish.py"
+    },
+    {
+      "source": "tools/cache-consolidator/tools/rebuild.py",
+      "destination": "tools/rebuild.py"
+    },
+    {
+      "source": "tools/cache-consolidator/tools/scrub.py",
+      "destination": "tools/scrub.py"
+    },
+    {
+      "source": "tools/cache-consolidator/tools/selftest.py",
+      "destination": "tools/selftest.py"
+    },
+    {
+      "source": "tools/cache-consolidator/tools/sweep_inbox.py",
+      "destination": "tools/sweep_inbox.py"
+    },
+    {
+      "source": "tools/cache-consolidator/tools/test_audit.py",
+      "destination": "tools/test_audit.py"
+    },
+    {
+      "source": "tools/cache-consolidator/tools/test_columns.py",
+      "destination": "tools/test_columns.py"
+    },
+    {
+      "source": "tools/cache-consolidator/tools/test_data_repository.py",
+      "destination": "tools/test_data_repository.py"
+    },
+    {
+      "source": "tools/cache-consolidator/tools/test_lock.py",
+      "destination": "tools/test_lock.py"
+    },
+    {
+      "source": "tools/cache-consolidator/tools/test_publish.py",
+      "destination": "tools/test_publish.py"
+    },
+    {
+      "source": "tools/cache-consolidator/tools/test_sync.py",
+      "destination": "tools/test_sync.py"
+    },
+    {
+      "source": "tools/cache-consolidator/tools/tray_app.py",
+      "destination": "tools/tray_app.py"
+    },
+    {
+      "source": "tools/cache-consolidator/tools/unpack.py",
+      "destination": "tools/unpack.py"
+    },
+    {
+      "source": "tools/cache-consolidator/tools/update.py",
+      "destination": "tools/update.py"
+    },
+    {
+      "source": "tools/cache-consolidator/tools/wdblib.py",
+      "destination": "tools/wdblib.py"
+    },
+    {
+      "source": "tools/cache-consolidator/tools/wdb_decode_creature.py",
+      "destination": "tools/wdb_decode_creature.py"
+    },
+    {
+      "source": "tools/cache-consolidator/tools/wdb_decode_gameobject.py",
+      "destination": "tools/wdb_decode_gameobject.py"
+    },
+    {
+      "source": "tools/cache-consolidator/tools/wdb_decode_items.py",
+      "destination": "tools/wdb_decode_items.py"
+    },
+    {
+      "source": "tools/cache-consolidator/tools/wdb_decode_npctext.py",
+      "destination": "tools/wdb_decode_npctext.py"
+    },
+    {
+      "source": "tools/cache-consolidator/tools/wdb_decode_npctext_full.py",
+      "destination": "tools/wdb_decode_npctext_full.py"
+    },
+    {
+      "source": "tools/cache-consolidator/tools/wdb_decode_pagetext.py",
+      "destination": "tools/wdb_decode_pagetext.py"
+    },
+    {
+      "source": "tools/cache-consolidator/tools/wdb_decode_quest.py",
+      "destination": "tools/wdb_decode_quest.py"
+    },
+    {
+      "source": "tools/cache-consolidator/tools/import_bisbeard.py",
+      "destination": "tools/import_bisbeard.py"
+    },
+    {
+      "source": "tools/cache-consolidator/tools/test_bisbeard.py",
+      "destination": "tools/test_bisbeard.py"
+    }
+  ]
+}

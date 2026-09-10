@@ -26,3 +26,5 @@ See [using the data](docs/USING-THE-DATA.md), [format](docs/WDB-FORMAT.md), and
 [contributing](CONTRIBUTING.md). The original README is retained as historical
 context in docs/LEGACY-README.md. Original author history is retained through a
 Git subtree split of the old tools directory.
+
+[BisBeard supplemental catalog](docs/BISBEARD.md) has its own lossless importer and verifier; it does not replace captured WDB records.
