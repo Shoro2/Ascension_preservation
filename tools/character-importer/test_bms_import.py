@@ -595,8 +595,16 @@ DataDir = "{data}"
     def test_the_same_directory_written_differently_is_not_a_conflict(self):
         """A user-typed --dbc-dir uses whatever slashes and case they felt like."""
         running = self.config("live", prefix="asc")
-        typed = running.dbc_dir.replace("\\", "/").upper()
+        typed = os.path.join(running.dbc_dir, ".")
+        if os.name == "nt":
+            typed = typed.replace("\\", "/").upper()
         self.assertIsNone(dbc_conflict("asc_characters", typed, [running]))
+
+    @unittest.skipIf(os.name == "nt", "POSIX path case is significant")
+    def test_a_different_case_directory_is_a_conflict_on_posix(self):
+        running = self.config("live", prefix="asc")
+        typed = running.dbc_dir.upper()
+        self.assertIs(dbc_conflict("asc_characters", typed, [running]), running)
 
     def test_the_same_dbc_set_under_another_name_is_not_a_conflict(self):
         """Only a difference that changes the import is worth stopping for."""

@@ -162,7 +162,8 @@ class EnchantmentBlobTests(unittest.TestCase):
     def test_gems_land_in_socket_slots_2_3_4(self):
         blob = enchantments_blob(parse_item_fields({"itemString": "1:0:11:22:33:0"}))
         values = blob.split(" ")
-        self.assertEqual(values[SOCK := 2 * 3], "11")
+        SOCK = 2 * 3
+        self.assertEqual(values[SOCK], "11")
         self.assertEqual(values[SOCK + 3], "22")
         self.assertEqual(values[SOCK + 6], "33")
 
