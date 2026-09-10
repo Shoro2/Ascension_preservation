@@ -96,7 +96,7 @@ import luaser
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-REPO_ZIP = ("https://github.com/hertigservices/ascension-cache-consolidator"
+REPO_ZIP = ("https://github.com/hertigservices/ascension-data"
             "/archive/refs/heads/main.zip")
 import config
 DEFAULT_DATA = config.DATA

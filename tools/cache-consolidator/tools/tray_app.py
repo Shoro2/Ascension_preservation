@@ -78,10 +78,8 @@ from publish import BUSY_EXIT
 
 PUBLISH = os.path.join(HERE, "publish.py")
 STATE_PATH = os.path.join(config.WORK, "tray_state.json")
-REPO = os.environ.get(
-    "CONSOLIDATOR_REPO",
-    os.path.join(os.path.dirname(config.WORK), "ascension-cache-consolidator"))
-UPSTREAM_URL = "https://github.com/hertigservices/ascension-cache-consolidator"
+REPO = config.PUBLISH_REPO
+UPSTREAM_URL = "https://github.com/hertigservices/ascension-data"
 DONE_DIR = os.path.join(config.INBOX, "archive")
 # Everything the window shows is appended here too, so a run that failed
 # while nobody was watching can still be read back afterwards.

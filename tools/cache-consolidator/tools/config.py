@@ -1,16 +1,14 @@
 """Where everything lives. Import this instead of hardcoding paths.
 
-Defaults are derived from the location of this file, so a fresh clone works with no
-configuration at all:
+Defaults keep intake, state and output outside the source checkout, under
+%LOCALAPPDATA%/AscensionPreservation/cache (or ~/AscensionPreservation/cache).
+WORK contains _inbox, extracted, merged and ledger.json; OUT defaults to
+WORK/cachedata. The publish checkout defaults to a sibling ascension-data.
 
-    <workspace>/            <- WORK, the parent of tools/
-      _inbox/               drop submitted archives and folders here
-      extracted/            archives unpacked (regenerable)
-      merged/               the union record store (regenerable)
-      ledger.json           per-file dedup ledger
-    <workspace>/../cachedata/   <- OUT, the publishable dataset
-
-Override any of it with environment variables, or with a config.json in WORK:
+A private runtime.local.json beside this module can set work, out and publish_repo.
+Environment overrides ASCENSION_CACHE_WORK, ASCENSION_CACHE_OUT,
+ASCENSION_CACHE_DATA and CONSOLIDATOR_REPO take precedence. A config.json in WORK
+controls scan roots and tools:
 
     { "extra_scan_roots": ["D:/somewhere/else"], "sevenzip": "C:/.../7z.exe" }
 
