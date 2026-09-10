@@ -708,7 +708,9 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0],
                                  formatter_class=argparse.RawDescriptionHelpFormatter,
                                  epilog=__doc__[__doc__.index("WHAT IT MERGES"):])
-    ap.add_argument("--data", default=DEFAULT_DATA, help="cachedata/ folder (default: next to tools/)")
+    ap.add_argument("--data", default=DEFAULT_DATA,
+                    help="the cachedata/ folder from the ascension-data "
+                         "repository (default: %(default)s)")
     ap.add_argument("--source", default="union",
                     help="'union' (default) or a game-mode name from cachedata/by-mode/")
     ap.add_argument("--list-sources", action="store_true")
@@ -733,7 +735,17 @@ def main(argv=None):
 
     data = os.path.abspath(a.data)
     if a.list_sources:
-        for s in list_sources(data):
+        found = list_sources(data)
+        if not found:
+            # Printing nothing and exiting 0 says "this dataset has no
+            # sources", which is a different and far more misleading thing
+            # than "there is no dataset here" -- and the error below sends
+            # people to this flag to find out which one it is.
+            print("!! no dataset at %s" % data, file=sys.stderr)
+            sys.exit("   pass --data <cachedata folder> from a checkout "
+                     "of ascension-data, or run install.py --fetch to "
+                     "download one")
+        for s in found:
             print(s)
         return 0
     src_dir = os.path.join(data, "union") if a.source == "union" else os.path.join(data, "by-mode", a.source)

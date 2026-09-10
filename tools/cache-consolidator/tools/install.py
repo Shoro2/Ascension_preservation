@@ -701,8 +701,10 @@ def main(argv=None):
         epilog=__doc__.split("HOW THE CLIENT")[0])
     ap.add_argument("--client", help="the WoW / Ascension install folder")
     ap.add_argument("--data", default=None,
-                    help="the cachedata/ folder (default: beside tools/, or "
-                         "<client>/cachedata-download when --fetch is used)")
+                    help="the cachedata/ folder from the ascension-data "
+                         "repository (default: %s, or "
+                         "<client>/cachedata-download when --fetch is used)"
+                         % DEFAULT_DATA)
     ap.add_argument("--fetch", action="store_true",
                     help="download the dataset from GitHub into --data first")
     ap.add_argument("--from-zip", metavar="ZIP",

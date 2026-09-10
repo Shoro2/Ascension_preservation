@@ -18,7 +18,15 @@ jobs:
       - name: Cache tool regressions
         shell: pwsh
         run: |
-          foreach ($test in @('test_audit.py','test_columns.py','test_lock.py','test_publish.py','test_sync.py','test_data_repository.py','test_bisbeard.py')) {
-            python -B "tools/cache-consolidator/tools/$test"
+          # Enumerated, not hand-listed: a fixed array is where the next
+          # regression test gets forgotten, and a test that ships but never
+          # runs is no test at all. The count guard is here because a glob
+          # that matches nothing would make this step pass vacuously.
+          $tests = Get-ChildItem 'tools/cache-consolidator/tools/test_*.py' | Sort-Object Name
+          Write-Host "found $($tests.Count) cache tool test(s)"
+          if ($tests.Count -lt 8) { throw "expected at least 8, found $($tests.Count)" }
+          foreach ($test in $tests) {
+            Write-Host "== $($test.Name)"
+            python -B $test.FullName
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
