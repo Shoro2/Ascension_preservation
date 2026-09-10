@@ -172,16 +172,17 @@ check(r.left() == 0, "name-query fully consumed")
 
 print("\n== fixed-layout burst packets (parse for sane length) ==")
 check(len(W.smsg_login_settimespeed()) == 12, "SETTIMESPEED == 12 bytes (u32+f32+u32)")
-check(len(W.smsg_initial_spells()) == 5, "INITIAL_SPELLS == 5 bytes")
-check(len(W.smsg_action_buttons()) == 1 + 144 * 4, "ACTION_BUTTONS == 1 + 144*4 bytes")
+check(len(W.smsg_initial_spells({"guid": 0xFFFFFF})) == 5, "INITIAL_SPELLS == 5 bytes")
+check(len(W.smsg_action_buttons({"guid": 0xFFFFFF})) == 1 + 144 * 4, "ACTION_BUTTONS == 1 + 144*4 bytes")
 check(len(W.smsg_send_unlearn_spells()) == 4, "SEND_UNLEARN_SPELLS == 4 bytes")
 check(len(W.smsg_time_sync_req(0)) == 4, "TIME_SYNC_REQ == 4 bytes")
 r = Rdr(W.smsg_bindpoint_update(char)); r.f(); r.f(); r.f(); bm = r.u32(); bz = r.u32()
 check(bm == 1 and bz == 14 and r.left() == 0, "BINDPOINTUPDATE xyz+map+zone")
 r = Rdr(W.smsg_motd("hello")); lc = r.u32(); ln = r.cstr()
 check(lc == 1 and ln == "hello" and r.left() == 0, "MOTD lineCount+cstr")
-r = Rdr(W.smsg_account_data_times()); r.u32(); a = r.u8(); m = r.u32()
-check(a == 1 and m == 0 and r.left() == 0, "ACCOUNT_DATA_TIMES minimal form")
+r = Rdr(W.smsg_account_data_times(3, [111, 222])); r.u32(); a = r.u8(); m = r.u32()
+check(a == 1 and m == 3 and r.u32() == 111 and r.u32() == 222 and r.left() == 0,
+      "ACCOUNT_DATA_TIMES mask and timestamps fully consumed")
 
 
 # ---- name-in-use + delete round trip on the DB ------------------------------
