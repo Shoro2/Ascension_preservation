@@ -5,7 +5,7 @@ client-cache installation, and world-database import. Each command remains usabl
 independently of the server and character importer.
 
 The dataset is maintained separately in
-[hertigservices/ascension-cache-consolidator](https://github.com/hertigservices/ascension-cache-consolidator).
+[hertigservices/ascension-data](https://github.com/hertigservices/ascension-data).
 Supply its cachedata directory using `ASCENSION_CACHE_DATA` or `--data`.
 
 ```powershell
