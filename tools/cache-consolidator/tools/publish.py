@@ -33,9 +33,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import config
 
-REPO = os.environ.get(
-    "CONSOLIDATOR_REPO",
-    os.path.join(os.path.dirname(config.WORK), "ascension-cache-consolidator"))
+REPO = config.PUBLISH_REPO
 DATA = os.path.join(REPO, "cachedata")
 POLL_SECONDS = 60
 BUSY_EXIT = 75  # temporary lock contention, not a pipeline failure
@@ -201,6 +199,8 @@ def sync_tools():
     wrote a new one, so the shipped set stays an explicit allow-list -- the
     files already under version control.
     """
+    if os.path.isfile(os.path.join(REPO, ".ascension-data.json")):
+        return []  # Source is maintained in Ascension_preservation.
     tracked = nul("ls-files", "-z", "tools")
     # Which of these is someone else part-way through? copy2 would erase that
     # edit with no diff, no prompt and no trace -- the intake copy simply wins,
@@ -239,7 +239,8 @@ def audit():
     """The gate. Runs on the repository tree -- the actual bytes to be pushed."""
     print(f"\n{'='*70}\n== publish audit\n{'='*70}", flush=True)
     ok = True
-    targets = [DATA, os.path.join(REPO, "tools"), os.path.join(REPO, "docs")]
+    targets = [p for p in (DATA, os.path.join(REPO, "tools"), os.path.join(REPO, "docs"))
+               if os.path.isdir(p)]
     # The README and LICENSE sit at the repository root, so walking the
     # subdirectories never touched them -- and they are published too. Ask git
     # which top-level files are tracked rather than naming them here, so a new
@@ -361,6 +362,7 @@ class Lock(object):
     """
 
     def __enter__(self):
+        os.makedirs(os.path.dirname(os.path.abspath(LOCK)), exist_ok=True)
         me = "%d\n%s\n%s\n" % (os.getpid(), time.strftime("%Y-%m-%d %H:%M:%S"),
                                " ".join(sys.argv))
         for attempt in (1, 2):
@@ -516,8 +518,13 @@ def _publish(push):
 
 
 def main(argv):
-    push = "--push" in argv
-    if "--watch" not in argv:
+    import argparse
+    parser = argparse.ArgumentParser(description="Consolidate and audit datasets; --push publishes them.")
+    parser.add_argument("--push", action="store_true", help="Push audited dataset commits to the configured remote")
+    parser.add_argument("--watch", action="store_true", help="Repeat when the intake changes")
+    args = parser.parse_args(argv)
+    push = args.push
+    if not args.watch:
         result = publish(push)
         return BUSY_EXIT if result is None else (0 if result else 1)
     print(f"watching {config.INBOX}\n  repo: {REPO}\n"

@@ -16,10 +16,13 @@ It exits 2 without testing anything if a publish is genuinely in progress.  That
 is on purpose: a test that reports success when it did not run is worse than one
 that admits it could not.
 """
-import os, io, sys
+import os, io, sys, tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import publish
+
+_sandbox = tempfile.TemporaryDirectory(prefix="cache-lock-test-")
+publish.LOCK = os.path.join(_sandbox.name, "new-runtime", "publish.lock")
 
 ok, bad = [], []
 

@@ -27,9 +27,16 @@ def _env(name, default):
     return v if v else default
 
 
-WORK = os.path.normpath(_env("ASCENSION_CACHE_WORK", os.path.dirname(HERE)))
+_runtime = {}
+_runtime_path = os.path.join(HERE, "runtime.local.json")
+if os.path.isfile(_runtime_path):
+    with open(_runtime_path, encoding="utf-8-sig") as f:
+        _runtime = json.load(f)
+_default_work = os.path.join(os.environ.get("LOCALAPPDATA") or os.path.expanduser("~"),
+                             "AscensionPreservation", "cache")
+WORK = os.path.normpath(_env("ASCENSION_CACHE_WORK", _runtime.get("work", _default_work)))
 OUT = os.path.normpath(_env("ASCENSION_CACHE_OUT",
-                            os.path.join(os.path.dirname(WORK), "cachedata")))
+                            _runtime.get("out", os.path.join(WORK, "cachedata"))))
 
 _cfg = {}
 _cfg_path = os.path.join(WORK, "config.json")
@@ -74,3 +81,7 @@ if __name__ == "__main__":
         print(f"{k:<10} {globals()[k]}")
     print(f"{'7-Zip':<10} {sevenzip()}")
     print(f"{'scan':<10} {SCAN_ROOTS}")
+
+# Dataset reads and publication remain independent of source location.
+DATA = os.path.normpath(_env("ASCENSION_CACHE_DATA", OUT))
+PUBLISH_REPO = _env("CONSOLIDATOR_REPO", _runtime.get("publish_repo", os.path.join(os.path.dirname(WORK), "ascension-data")))

@@ -1,0 +1,38 @@
+name: Character importer
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    # The importer has to run wherever people host realms, so prove it on both.
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ["3.9", "3.11", "3.13"]
+
+    defaults:
+      run:
+        working-directory: tools/character-importer
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      # No database and no realm: the suites that need one skip themselves.
+      - name: Run tests
+        run: python -m unittest discover -p "test_*.py" -v
+
+      - name: Check the package builds
+        run: |
+          python -m pip install build
+          python -m build

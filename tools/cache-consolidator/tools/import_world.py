@@ -97,7 +97,8 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-DEFAULT_DATA = os.path.normpath(os.path.join(HERE, "..", "cachedata"))
+import config
+DEFAULT_DATA = config.DATA
 STAGE_PREFIX = "_cachemerge_"
 BUILD = 12340
 TABLES = ["gameobject_template", "gameobject_questitem", "creature_template",

@@ -98,7 +98,8 @@ if hasattr(sys.stdout, "reconfigure"):
 
 REPO_ZIP = ("https://github.com/hertigservices/ascension-cache-consolidator"
             "/archive/refs/heads/main.zip")
-DEFAULT_DATA = os.path.join(os.path.dirname(HERE), "cachedata")
+import config
+DEFAULT_DATA = config.DATA
 
 # Where a client usually lives, tried in order when --client is not given.
 GUESSES = ["C:/Ascension", "C:/Games/Ascension", "C:/Program Files/Ascension",

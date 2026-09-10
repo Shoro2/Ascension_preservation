@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "components": {
+    "character-importer": {
+      "repository": "https://github.com/hertigservices/BindMySoul-Ascension-Importer",
+      "commit": "e8bf002236eb2cfd2f34d8d61e97c19f6c66f875",
+      "history": "full subtree; original commits retained"
+    },
+    "cache-consolidator": {
+      "repository": "https://github.com/hertigservices/ascension-cache-consolidator",
+      "commit": "df3dc9563e28847a0eafe45c38ee2bcff0410dbb",
+      "tools_history": "0dec250583d62651d7f5a150b7cfe639fb34209f",
+      "history": "tools-only subtree split; full original data history remains in data repository"
+    }
+  }
+}
