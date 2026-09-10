@@ -20,6 +20,12 @@ login → world → Character-Advancement path.
 
 ---
 
+## Default local authentication: AuthGate
+
+The maintained original-client path now uses [AscensionAuthGate](contrib/AscensionAuthGate/README.md), adapted from **FirstOni's** code, with real per-account SRP password validation and a verified server proof. The local bridge remains on 8088; the separate auth shim on 3799 is no longer needed for this path. The original-client character was tested successfully after migration. [Read the scoped security review](contrib/AscensionAuthGate/SECURITY-REVIEW.md) before installing.
+
+The source, build/tests and guarded original-client installer are included; game binaries, captured keys, private histories and prebuilt DLLs are not. Both CoA and Free-Pick metadata are supported. Older shim-based runbooks below remain historical/alternative documentation, and the shim remains in the repository for deliberate legacy use.
+
 ## Start here
 
 1. **[`docs/HOW-THE-REDIRECT-WORKS.md`](docs/HOW-THE-REDIRECT-WORKS.md)** — the
@@ -89,6 +95,7 @@ reference/       Curated screenshots + Lua/opcode reference text
   ascension_custom_opcodes.json 754-entry subset, 749 of them above stock's 0x500 ceiling
 area-52/         Area-52 "Free-Pick" realm-flavour specifics (see its README)
 contrib/         Tools contributed by others, adapted (see each README)
+  AscensionAuthGate/             FirstOni-derived reviewed local auth proxy + tests
   AscensionRedirect/            WinDivert packet redirect + Frida auth-send probe
   mpqtools/                     mpqcat / mpqfind sources (StormLib) used by tools/extract_*.py
 ```
@@ -118,10 +125,12 @@ contrib/         Tools contributed by others, adapted (see each README)
 This package was scrubbed before publishing: the maintainer's account
 email/passwords and the real DB password were removed, and raw live-login packet
 captures (`e0-captures/`, `live-*.bin`) and server logs are **excluded**. The
-local login uses account `test` / any password. If you regenerate content from a
+legacy shim accepts account `test` / any password; the default AuthGate path requires an existing local account and its correct password. If you regenerate content from a
 live capture, do not commit captures containing real credentials.
 
 ## Credits
+
+**FirstOni** contributed the original AscensionAuthGate design and implementation. The reviewed local adaptation, security hardening and tests are documented in [its attribution notice](contrib/AscensionAuthGate/THIRD-PARTY-NOTICE.md).
 
 Reverse-engineering, documentation, and the local server stack were developed
 iteratively with **Claude Code**. Preservation project — not affiliated with or

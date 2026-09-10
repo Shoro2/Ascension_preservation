@@ -1,0 +1,12 @@
+build/
+backups/
+last-*.json
+*.log
+*.bin
+*.dll
+*.exe
+*.obj
+*.lib
+*.exp
+*.map
+__pycache__/
