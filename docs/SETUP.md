@@ -23,11 +23,17 @@ installed-hub/
 - **Restore a character:** `cd tools/character-importer`, install `requirements.txt`,
   and run `python bms_import.py --help`. Run a preview against the intended realm
   before an apply. The importer remains its own installable Python package.
-- **Install recovered caches:** `python tools/cache-consolidator/tools/install.py
-  --data <ascension-data>/cachedata`. Its default invocation previews changes;
-  `--write` applies them. Client files are supplied by the user.
-- **Prepare world data:** `python tools/cache-consolidator/tools/import_world.py --help`.
-  Keep its SQL staging and backups outside source and verify the target config/database.
+- **Install recovered caches:** `cd tools/cache-consolidator`, then
+  `python -B tools/install.py --data <ascension-data>/cachedata`. Its default
+  invocation previews changes; `--write` applies them. Client files are supplied
+  by the user.
+- **Prepare world data:** from that same folder,
+  `python -B tools/import_world.py --help`. Keep its SQL staging and backups
+  outside source and verify the target config/database.
+- Both cache commands are walked through step by step in
+  [using the data](../tools/cache-consolidator/docs/USING-THE-DATA.md). Every
+  command in that guide runs from `tools/cache-consolidator`, which is why the
+  two above start by moving there.
 - **Use the Ascension bridge:** configure the private runtime file below, retain your
   existing core and client, and follow the protocol/boot handoffs for the client redirect.
   The bridge listens on loopback 8088 and reaches AzerothCore on 8086. The default

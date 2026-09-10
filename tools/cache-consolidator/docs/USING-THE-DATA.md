@@ -338,7 +338,6 @@ To rebuild the icon lookup from a client that has Ascension's DBC:
 python -B tools/export_stock_client.py --data <ascension-data>/cachedata --dbc <path>/ItemDisplayInfo.dbc --stock-dbc <stock 3.3.5a>/ItemDisplayInfo.dbc
 ```
 
-
 ## Troubleshooting
 
 - **Everything vanished after first login.** Cache version mismatch; see above.

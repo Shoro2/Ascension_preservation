@@ -1,5 +1,11 @@
 # Ascension Cache Consolidator
 
+> **Historical.** This is the README this component had when the tools and the
+> dataset shared one repository, kept for context. The tools now live here and
+> the dataset lives in [ascension-data](https://github.com/hertigservices/ascension-data); the links below have been repointed
+> so they still resolve, but the text still describes the older arrangement.
+> For current instructions start at [USING-THE-DATA.md](USING-THE-DATA.md).
+
 Merges World of Warcraft client cache files (`Cache\WDB`) submitted by many players
 into one deduplicated dataset, and writes the result back out **in the client's own
 format** so it can be used directly.
@@ -8,7 +14,7 @@ Built for [Project Ascension](https://ascension.gg)'s 3.3.5a client, where serve
 game data is not public and the client's own cache is the only record of it that
 players hold.
 
-**Have cache files of your own?** See [CONTRIBUTING.md](CONTRIBUTING.md) — `tools/contribute.py` packages a submission from your install, keeps only the
+**Have cache files of your own?** See [CONTRIBUTING.md](../CONTRIBUTING.md) — `tools/contribute.py` packages a submission from your install, keeps only the
 parts that are game data, and shows you the list before it writes anything.
 
 ## The problem it solves
@@ -53,8 +59,8 @@ mode rather than across all of them.
 
 ## What it produces
 
-**The dataset itself is in this repository**, under [`cachedata/`](cachedata/). You do
-not have to run anything to use it.
+**The dataset itself is a separate repository**, [ascension-data](https://github.com/hertigservices/ascension-data), under
+`cachedata/`. You do not have to run anything to use it.
 
 ```
 cachedata/
@@ -123,7 +129,7 @@ value is range-checked before it is written, because AzerothCore's recommended M
 setup would otherwise clamp or truncate silently. A fresh AzerothCore world gains
 ~60,000 items from the Conquest of Azeroth view alone, or ~500,000 from the union.
 
-**[docs/USING-THE-DATA.md](docs/USING-THE-DATA.md)** is the full walk-through for both
+**[USING-THE-DATA.md](USING-THE-DATA.md)** is the full walk-through for both
 halves: what the data can and cannot show in game, the Ascension-client and
 stock-client setups, the cache-version handshake that silently deletes a mis-installed
 cache, and how to check the result in game.
@@ -299,7 +305,7 @@ later.
 
 The same allow-list runs on the contributor's own machine: `tools/contribute.py` reads
 an install and packages only recognised game content, so a submission never has to
-travel through anyone else's hands carrying a `WTF` tree. [CONTRIBUTING.md](CONTRIBUTING.md)
+travel through anyone else's hands carrying a `WTF` tree. [CONTRIBUTING.md](../CONTRIBUTING.md)
 explains it without assuming the reader writes code, and gives a by-hand route for
 people who would rather not run a script.
 
@@ -325,12 +331,12 @@ output "looking right":
   files and git sees no diff. Measured: of 201 published files, a full re-run changed
   none of them.
 
-See [docs/WDB-FORMAT.md](docs/WDB-FORMAT.md) for the binary format, including the parts
+See [WDB-FORMAT.md](WDB-FORMAT.md) for the binary format, including the parts
 that are not documented elsewhere and cost real time to work out.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT — see [LICENSE](../LICENSE).
 
 The *tool* is MIT. The cache data it processes is Project Ascension's game content,
 submitted by players for preservation; it is not covered by this license.
